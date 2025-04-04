@@ -19,7 +19,7 @@ train_dataloader = DataLoader(ds, batch_size=1, collate_fn=collate_fn)
 
 ## Train
 
-for _ in range(config):
+for _ in range(config.EPOCHS):
     for images, targets in train_dataloader:
         
         break

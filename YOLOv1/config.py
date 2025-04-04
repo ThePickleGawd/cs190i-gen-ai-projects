@@ -1,5 +1,5 @@
 # Train settings
-EPOCHS = 32
+EPOCHS = 1
 DATA_PATH = "data"
 BATCH_SIZE = 64
 

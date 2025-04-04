@@ -7,19 +7,19 @@ from torch.utils.data import DataLoader
 
 import config
 
-## DataLoader
-
-def collate_fn(batch):
-    imgs, targets = zip(*batch)
-    return torch.stack(imgs), targets
+## Dataset
 
 ds = VOCDataset()
 
-train_dataloader = DataLoader(ds, batch_size=1, collate_fn=collate_fn)
+def collate_fn(batch):
+    imgs, targets = zip(*batch)
+    return torch.stack(imgs), torch.stack(targets)
+
+train_dataloader = DataLoader(ds, batch_size=config.BATCH_SIZE, collate_fn=collate_fn)
 
 ## Train
 
 for _ in range(config.EPOCHS):
     for images, targets in train_dataloader:
-        
+        print(images.shape, targets.shape)
         break

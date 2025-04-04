@@ -47,8 +47,7 @@ class VOCDataset(Dataset):
             box1, box2 = torch.tensor([x_center, y_center, w, h, conf]), torch.zeros(5)
             label_vector = torch.concat([box1, box2, one_hot])
 
-            # Insert into slot
-            print(x_cell, y_cell)
+            # Insert into slot (Note: Will override if another class was there but oh well...)
             target[y_cell, x_cell, :] = label_vector
 
         return image, target

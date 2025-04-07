@@ -5,9 +5,9 @@ import config
 
 class YOLOLoss(nn.Module):
     def __init__(self):
-        super.__init__()
+        super().__init__()
 
-    def calc_iou(bbox1, bbox2):
+    def calc_iou(self, bbox1, bbox2):
         x1, y1, w1, h1 = bbox1
         x2, y2, w2, h2 = bbox2
 
@@ -43,16 +43,16 @@ class YOLOLoss(nn.Module):
 
         # From paper
         lambda_coord, lambda_noobj = 5, 0.5
+        has_object = (target[..., 4] > 0)
 
         loss = 0.0
 
         for i in range(config.S):
             for j in range(config.S):
-                target = targets[..., :]
-                pred = preds[..., :]
+                target = targets[:, i, j, :]
+                pred = preds[:, i, j, :]
 
                 # No loss if no object in cell
-                has_object = torch.any(target[-config.VOC_CLASSES:] != 0)
 
                 ## MSE Bounding box loss
 
@@ -62,6 +62,8 @@ class YOLOLoss(nn.Module):
                     # iou for box index b (note: 5 features, but we don't want last one, conf)
                     pred_bbox = pred[b*5:(b+1)*5-1]
                     target_bbox = target[b*5,(b+1)*5-1]
+
+                    print(pred_bbox.shape)
 
                     iou = self.calc_iou(pred_bbox, target_bbox)
                     ious.append(iou)
@@ -73,10 +75,9 @@ class YOLOLoss(nn.Module):
                     pos_loss = (pred[b_idx*5] - target[b_idx*5])**2 + (pred[b_idx*5+1] - target[b_idx*5+1])** 2
                     loss += pos_loss
                 
-
                 ## MSE Probability loss (though I think cross-entropy is better...)
-                pred_classes = pred[-config.VOC_CLASSES:]
-                target_classes = target[-config.VOC_CLASSES:]
+                pred_classes = pred[-config.C:]
+                target_classes = target[-config.C:]
                 loss += torch.sum((pred_classes - target_classes)**2)
 
                 ## MSE Confidence loss
@@ -91,4 +92,4 @@ class YOLOLoss(nn.Module):
                         loss += lambda_noobj * (pred_conf - target_conf)**2
         
         N = pred[0] # batch size
-        return loss / N
+        return loss / N 

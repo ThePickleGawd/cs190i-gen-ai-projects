@@ -21,8 +21,8 @@ class VOCDataset(Dataset):
     def __getitem__(self, idx):
         image, info = self.dataset[idx]
         
-        # Predictions are encoded as a S × S × (B ∗ 5 + C) tensor.
-        depth = config.B * 5 + config.C
+        # Predictions are encoded as a S × S × (B * (5 + C)) tensor.
+        depth = config.B * (5 + config.C)
         target = torch.zeros((config.C, config.C, depth), dtype=torch.float32)
 
         labels = info["annotation"]["object"]
@@ -38,16 +38,36 @@ class VOCDataset(Dataset):
             conf = 1.0
 
             # Find the right slot to put it in
-            x_center, y_center = (xmin + xmax) / 2, (ymin + ymax) / 2
-            w, h = xmax - xmin, ymax - ymin
-            x_cell_size, y_cell_size = config.IMG_SIZE[0] / config.S, config.IMG_SIZE[1] / config.S
-            x_cell, y_cell = int(x_center // x_cell_size), int(y_center // y_cell_size)
+            x_center = (xmin + xmax) / 2
+            y_center = (ymin + ymax) / 2
+            x_cell_size = config.IMG_SIZE[0] / config.S
+            y_cell_size = config.IMG_SIZE[1] / config.S
 
-            # Make boxes (box2 is empty obv), put it all together
-            box1, box2 = torch.tensor([x_center, y_center, w, h, conf]), torch.zeros(5)
-            label_vector = torch.concat([box1, box2, one_hot])
+            x_cell = int(x_center // x_cell_size)
+            y_cell = int(y_center // y_cell_size)
 
-            # Insert into slot (Note: Will override if another class was there but oh well...)
-            target[y_cell, x_cell, :] = label_vector
+            # Normalized x,y
+            x_cell_tl = x_cell * int(x_cell_size)
+            y_cell_tl = y_cell * int(y_cell_size)
+
+            x = (x_center - x_cell_tl) / x_cell_size
+            y = (y_center - y_cell_tl) / y_cell_size
+
+            # Scaled w,h
+            w = (xmax - xmin) / config.IMG_SIZE[0]
+            h = (ymax - ymin) / config.IMG_SIZE[1]
+
+            # Make box
+            bbox = torch.tensor([x, y, w, h, conf])
+            label_vector = torch.concat([bbox, one_hot])
+
+            # Add to end of grid slot
+            for idx in range(config.B):
+                # Don't override
+                if torch.any(target[y_cell, x_cell, idx*(5+config.C):(idx+1)*(5+config.C)] != 0):
+                    continue
+
+                target[y_cell, x_cell, idx*(5+config.C):(idx+1)*(5+config.C)] = label_vector
+                break
 
         return image, target

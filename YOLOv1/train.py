@@ -11,8 +11,11 @@ import config
 
 ## Config
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+device = torch.device("cpu")
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+elif torch.backends.mps.is_available():
+    device = torch.device("mps")
 
 ## Dataset
 
@@ -36,6 +39,7 @@ loss_fn = YOLOLoss()
 for _ in range(config.EPOCHS):
     for images, targets in train_dataloader:
         images, targets = images.to(device), targets.to(device)
+        
         out = model(images)
 
         loss = loss_fn(out, targets)
@@ -44,4 +48,3 @@ for _ in range(config.EPOCHS):
         loss.backwards()
         optim.step()
         
-        break

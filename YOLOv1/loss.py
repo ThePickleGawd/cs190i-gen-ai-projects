@@ -33,13 +33,16 @@ class YOLOLoss(nn.Module):
 
         """
         SxS cells (7x7)
-        Each cell is 30 depth
-        First 5 is bounding box 1, Second is bounding box 2
+        Each cell is B*(5+C) depth
+        First 5 is bounding box, Next C are class. Repeate B times
         We can directly compare since the label data gives us both
         - The IOU is how much they intersect vs how much they total take up
         - We correspond them correctly based on the highest IOU
         The next 20 is class prediction
         """
+
+        N, S, *_ = preds.shape
+        B, C = config.B, config.C
 
         # From paper
         lambda_coord, lambda_noobj = 5, 0.5
@@ -47,8 +50,18 @@ class YOLOLoss(nn.Module):
 
         loss = 0.0
 
-        for i in range(config.S):
-            for j in range(config.S):
+        preds = preds.view(N, S, S, B, 5 + C)
+        targets = targets.view(N, S, S, B, 5 + C)
+
+
+
+
+
+
+
+
+        for i in range(S):
+            for j in range(S):
                 target = targets[:, i, j, :]
                 pred = preds[:, i, j, :]
 
@@ -58,7 +71,7 @@ class YOLOLoss(nn.Module):
 
                 # Get "responsible" bbox (the "1"^obj_ij)
                 b_idx, ious = 0, []
-                for b in range(config.B):
+                for b in range(B):
                     # iou for box index b (note: 5 features, but we don't want last one, conf)
                     pred_bbox = pred[b*5:(b+1)*5-1]
                     target_bbox = target[b*5,(b+1)*5-1]
@@ -76,13 +89,13 @@ class YOLOLoss(nn.Module):
                     loss += pos_loss
                 
                 ## MSE Probability loss (though I think cross-entropy is better...)
-                pred_classes = pred[-config.C:]
-                target_classes = target[-config.C:]
+                pred_classes = pred[-C:]
+                target_classes = target[-C:]
                 loss += torch.sum((pred_classes - target_classes)**2)
 
                 ## MSE Confidence loss
                 gnd_truth_obj = torch.argmax(target_classes)
-                for b in range(config.B):
+                for b in range(B):
                     pred_conf = iou[b] * pred_classes[gnd_truth_obj]
                     target_conf = iou[b] * 1
 

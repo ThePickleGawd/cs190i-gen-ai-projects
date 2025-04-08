@@ -30,8 +30,9 @@ class YOLOLoss(nn.Module):
 
 
     def forward(self, preds, targets):
-
         """
+        (N, S, S, B*(5+C))
+
         SxS cells (7x7)
         Each cell is B*(5+C) depth
         First 5 is bounding box, Next C are class. Repeate B times
@@ -41,24 +42,21 @@ class YOLOLoss(nn.Module):
         The next 20 is class prediction
         """
 
+        assert preds.shape == target.shape
+
         N, S, *_ = preds.shape
         B, C = config.B, config.C
-
-        # From paper
-        lambda_coord, lambda_noobj = 5, 0.5
-        has_object = (target[..., 4] > 0)
-
-        loss = 0.0
 
         preds = preds.view(N, S, S, B, 5 + C)
         targets = targets.view(N, S, S, B, 5 + C)
 
+        loss = 0.0
 
-
-
-
-
-
+        # From paper
+        lambda_coord, lambda_noobj = 5, 0.5
+        obj_i = torch.zeros((N, S, S), dtype=torch.bool) # Whether grid cell has an object
+        obj_ij = torch.zeros((N, S, S, B), dtype=torch.bool) # Whether this bounding box is responsible
+        
 
         for i in range(S):
             for j in range(S):

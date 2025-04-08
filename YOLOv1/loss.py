@@ -27,6 +27,39 @@ class YOLOLoss(nn.Module):
         iou = intersect/union
 
         return iou
+    
+    def batch_iou(self, a, b):
+        a, b = a[..., :4], b[..., :4]
+
+        # TODO: Get area by w*h first, then conver to xyxy
+
+        def xywh_to_xyxy(box):
+            x, y, w, h = box.unbind(-1)
+            x1 = x - w/2
+            y1 = y - h/2
+            x2 = x + w/2
+            y2 = y + h/2
+            return torch.stack([x1, y1, x2, y2], dim=-1)
+        
+        # We want to broadcast so we get B "iou options" for each box
+        a = xywh_to_xyxy(a).unsqueeze(4)  # (N, S, S, B, 1, 4)
+        b = xywh_to_xyxy(b).unsqueeze(3)  # (N, S, S, 1, B, 4)
+
+        # Overlapping intesection points
+        inter_x1 = torch.max(a[..., 0], b[..., 0])
+        inter_y1 = torch.max(a[..., 1], b[..., 1])
+        inter_x2 = torch.min(a[..., 2], b[..., 2])
+        inter_y2 = torch.min(a[..., 3], b[..., 3])
+
+        # IOU
+        inter_w = (inter_x2 - inter_x1).clamp(min=0)
+        inter_h = (inter_y2 - inter_y1).clamp(min=0)
+        inter = inter_w * inter_h
+
+        union = inter_w*inter_h - inter
+
+        return inter/union
+
 
 
     def forward(self, preds, targets):

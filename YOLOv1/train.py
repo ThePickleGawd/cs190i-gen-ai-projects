@@ -33,19 +33,23 @@ train_dataloader = DataLoader(ds, batch_size=config.BATCH_SIZE, collate_fn=colla
 model = YOLO().to(device)
 model.train()
 
-optim = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9, weight_decay=0.0005)
+# optim = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9, weight_decay=0.0005)
+optim = torch.optim.AdamW(model.parameters(), lr=0.001, weight_decay=0.0005)
 loss_fn = YOLOLoss()
 
-for _ in range(config.EPOCHS):
+for epoch in range(config.EPOCHS):
     for images, targets in train_dataloader:
         images, targets = images.to(device), targets.to(device)
 
         out = model(images)
 
         loss = loss_fn(out, targets)
-        
+
         optim.zero_grad()
         loss.backward()
         optim.step()
+        print(f"loss: {loss}")
         break
-        
+    
+
+    

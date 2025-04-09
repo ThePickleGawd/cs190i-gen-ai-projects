@@ -1,37 +1,20 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 import config
 
 class YOLOLoss(nn.Module):
     def __init__(self):
         super().__init__()
-
-    def calc_iou(self, bbox1, bbox2):
-        x1, y1, w1, h1 = bbox1
-        x2, y2, w2, h2 = bbox2
-
-        tl1 = (x1 - w1 / 2, y1 - h1 / 2)  # top-left
-        br1 = (x1 + w1 / 2, y1 + h1 / 2)  # bottom-right
-
-        tl2 = (x2 - w2 / 2, y2 - h2 / 2)
-        br2 = (x2 + w2 / 2, y2 + h2 / 2)
-
-        # Intersection, Union, IOU
-        intersect_w = max(0, min(br1[0], br2[0]) - max(tl1[0], tl2[0]))
-        intersect_h = max(0, min(br1[1], br2[1]) - max(tl1[1], tl2[1]))
-        intersect = intersect_w * intersect_h
-
-        union = w1*h1 + w2*h2 - intersect
-
-        iou = intersect/union
-
-        return iou
     
     def batch_iou(self, a, b):
         """
         a, b: (N, S, S, B, 5+C)
         output: (N, S, S, B, B)
+
+        Compares iou across every pred box and target box.
+        We want to pick the index with best iou match   
         """
 
         a, b = a[..., :4], b[..., :4]
@@ -66,7 +49,8 @@ class YOLOLoss(nn.Module):
 
         # IOU
         union = area_a + area_b - inter
-        ious = inter / (union + 1e-7)
+        ious = inter / union
+        ious = torch.where(union > 0, ious, torch.zeros_like(ious)) # No NaN
 
         return ious
 
@@ -97,67 +81,37 @@ class YOLOLoss(nn.Module):
         ious = self.batch_iou(preds, targets)
         responsible = torch.argmax(ious, dim=-1, keepdim=True)
         responsible = responsible.expand(-1, -1, -1, -1, targets.size(-1))
-
         gnd_truth = torch.gather(targets, dim=3, index=responsible) # (N, S, S, B, 5+C)
 
         ## Bounding Box Loss
         
         # x,y loss
-        loss += torch.sum(obj_i * (gnd_truth[..., 0] - preds[..., 0]) ** 2)
-        loss += torch.sum(obj_i * (gnd_truth[..., 1] - preds[..., 1]) ** 2)
+        loss += lambda_coord * torch.sum(obj_i * (gnd_truth[..., 0] - preds[..., 0]) ** 2)
+        loss += lambda_coord * torch.sum(obj_i * (gnd_truth[..., 1] - preds[..., 1]) ** 2)
+        print(torch.isnan(loss).any().item())
 
         # w, h loss
-        loss += torch.sum(obj_i * ((gnd_truth[..., 2].sqrt() - preds[..., 2].sqrt()) ** 2))
-        loss += torch.sum(obj_i * ((gnd_truth[..., 3].sqrt() - preds[..., 3].sqrt()) ** 2))
+        loss += lambda_coord * torch.sum(obj_i * ((gnd_truth[..., 2].sqrt() - preds[..., 2].sqrt()) ** 2))
+        loss += lambda_coord * torch.sum(obj_i * ((gnd_truth[..., 3].sqrt() - preds[..., 3].sqrt()) ** 2))
+        print(torch.isnan(loss).any().item())
 
+        ## Confidence Loss
 
-        return loss
-        
+        conf_preds = preds[..., 4]
+        conf_targets = gnd_truth[..., 4]
+        print(torch.isnan(loss).any().item())
 
-        return 0
-        for i in range(S):
-            for j in range(S):
-                target = targets[:, i, j, :]
-                pred = preds[:, i, j, :]
+        # Note difference. Only apply lambda_noobj when no obj in entire cell
+        loss += torch.sum(obj_i * (conf_targets - conf_preds) ** 2)
+        loss += lambda_noobj * torch.sum((1 - obj_i) * (conf_targets - conf_preds) ** 2)
+        print(torch.isnan(loss).any().item())
 
-                # No loss if no object in cell
+        ## Classification Loss
 
-                ## MSE Bounding box loss
+        # Use cross entropy instead of squared error for classification
+        class_preds = preds[..., 5:]
+        class_targets = gnd_truth[..., 5:].argmax(-1)
+        loss += F.cross_entropy(class_preds.reshape(-1, C), class_targets.reshape(-1))
+        print(torch.isnan(loss).any().item())
 
-                # Get "responsible" bbox (the "1"^obj_ij)
-                b_idx, ious = 0, []
-                for b in range(B):
-                    # iou for box index b (note: 5 features, but we don't want last one, conf)
-                    pred_bbox = pred[b*5:(b+1)*5-1]
-                    target_bbox = target[b*5,(b+1)*5-1]
-
-                    print(pred_bbox.shape)
-
-                    iou = self.calc_iou(pred_bbox, target_bbox)
-                    ious.append(iou)
-
-                    if iou > iou:
-                       b_idx = b
-
-                if has_object:
-                    pos_loss = (pred[b_idx*5] - target[b_idx*5])**2 + (pred[b_idx*5+1] - target[b_idx*5+1])** 2
-                    loss += pos_loss
-                
-                ## MSE Probability loss (though I think cross-entropy is better...)
-                pred_classes = pred[-C:]
-                target_classes = target[-C:]
-                loss += torch.sum((pred_classes - target_classes)**2)
-
-                ## MSE Confidence loss
-                gnd_truth_obj = torch.argmax(target_classes)
-                for b in range(B):
-                    pred_conf = iou[b] * pred_classes[gnd_truth_obj]
-                    target_conf = iou[b] * 1
-
-                    if b == b_idx:
-                        loss += (pred_conf - target_conf)**2
-                    else:
-                        loss += lambda_noobj * (pred_conf - target_conf)**2
-        
-        N = pred[0] # batch size
-        return loss / N 
+        return loss / N

@@ -83,7 +83,8 @@ class YOLO(nn.Module):
             nn.Linear(1024* config.S * config.S, 4096),
             nn.LeakyReLU(0.1),
             nn.Dropout(0.5),
-            nn.Linear(4096, config.S * config.S * self.depth)
+            nn.Linear(4096, config.S * config.S * self.depth), 
+            nn.Sigmoid() # Not clear if original paper uses this, but we should clamp model to valid values
         )
  
     def forward(self, X):

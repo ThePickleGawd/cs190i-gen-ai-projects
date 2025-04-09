@@ -37,19 +37,36 @@ model.train()
 optim = torch.optim.AdamW(model.parameters(), lr=0.001, weight_decay=0.0005)
 loss_fn = YOLOLoss()
 
+losses = []
+
 for epoch in range(config.EPOCHS):
+    epoch_loss = 0
     for images, targets in train_dataloader:
         images, targets = images.to(device), targets.to(device)
 
         out = model(images)
-
         loss = loss_fn(out, targets)
 
         optim.zero_grad()
         loss.backward()
         optim.step()
-        print(f"loss: {loss}")
+
+        epoch_loss += loss.item()
+        print(f"[Epoch {epoch+1}] Batch Loss: {loss.item():.4f}")
+
+        # remove `break` to train on the full dataset
         break
-    
+
+    avg_loss = epoch_loss / len(train_dataloader)
+    losses.append(avg_loss)
+    print(f"Epoch {epoch+1} Average Loss: {avg_loss:.4f}")
+
+    # Save model checkpoint
+    torch.save({
+        'epoch': epoch,
+        'model_state_dict': model.state_dict(),
+        'optimizer_state_dict': optim.state_dict(),
+        'loss': avg_loss,
+    }, f'checkpoint_epoch_{epoch+1}.pth')
 
     

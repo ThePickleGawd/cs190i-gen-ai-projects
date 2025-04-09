@@ -77,15 +77,15 @@ class YOLO(nn.Module):
 
         self.model = nn.Sequential(*layers)
 
-        self.depth = config.B * 5 + config.C
+        self.depth = config.B * (5 + config.C)
         self.out = nn.Sequential(
             nn.Flatten(),
-            nn.Linear(1024* config.S* config.S, 4096),
+            nn.Linear(1024* config.S * config.S, 4096),
             nn.LeakyReLU(0.1),
             nn.Dropout(0.5),
             nn.Linear(4096, config.S * config.S * self.depth)
         )
-
+ 
     def forward(self, X):
         X = self.model(X)
         output = self.out(X)

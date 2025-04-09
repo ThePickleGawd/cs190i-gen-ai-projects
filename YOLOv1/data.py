@@ -23,7 +23,7 @@ class VOCDataset(Dataset):
         
         # Predictions are encoded as a S × S × (B * (5 + C)) tensor.
         depth = config.B * (5 + config.C)
-        target = torch.zeros((config.C, config.C, depth), dtype=torch.float32)
+        target = torch.zeros((config.S, config.S, depth), dtype=torch.float32)
 
         labels = info["annotation"]["object"]
         for label in labels:
@@ -43,8 +43,8 @@ class VOCDataset(Dataset):
             x_cell_size = config.IMG_SIZE[0] / config.S
             y_cell_size = config.IMG_SIZE[1] / config.S
 
-            x_cell = int(x_center // x_cell_size)
-            y_cell = int(y_center // y_cell_size)
+            x_cell = min(int(x_center // x_cell_size), config.S - 1)
+            y_cell = min(int(y_center // y_cell_size), config.S - 1)
 
             # Normalized x,y
             x_cell_tl = x_cell * int(x_cell_size)

@@ -39,7 +39,7 @@ loss_fn = YOLOLoss()
 for _ in range(config.EPOCHS):
     for images, targets in train_dataloader:
         images, targets = images.to(device), targets.to(device)
-        
+
         out = model(images)
 
         loss = loss_fn(out, targets)
@@ -47,4 +47,5 @@ for _ in range(config.EPOCHS):
         optim.zero_grad()
         loss.backwards()
         optim.step()
+        break
         

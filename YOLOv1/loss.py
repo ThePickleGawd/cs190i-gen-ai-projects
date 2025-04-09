@@ -29,9 +29,17 @@ class YOLOLoss(nn.Module):
         return iou
     
     def batch_iou(self, a, b):
+        """
+        a, b: (N, S, S, B, 5+C)
+        output: (N, S, S, B, B)
+        """
+
         a, b = a[..., :4], b[..., :4]
 
-        # TODO: Get area by w*h first, then conver to xyxy
+        # Get area of a and b boxes
+        area_a = (a[..., 2] * a[..., 3]).unsqueeze(4)  # shape: (N, S, S, B, 1)
+        area_b = (b[..., 2] * b[..., 3]).unsqueeze(3)  # shape: (N, S, S, 1, B)
+
 
         def xywh_to_xyxy(box):
             x, y, w, h = box.unbind(-1)
@@ -41,7 +49,7 @@ class YOLOLoss(nn.Module):
             y2 = y + h/2
             return torch.stack([x1, y1, x2, y2], dim=-1)
         
-        # We want to broadcast so we get B "iou options" for each box
+        # Get corners. Also, broadcast so we get B "iou options" for each box
         a = xywh_to_xyxy(a).unsqueeze(4)  # (N, S, S, B, 1, 4)
         b = xywh_to_xyxy(b).unsqueeze(3)  # (N, S, S, 1, B, 4)
 
@@ -51,14 +59,16 @@ class YOLOLoss(nn.Module):
         inter_x2 = torch.min(a[..., 2], b[..., 2])
         inter_y2 = torch.min(a[..., 3], b[..., 3])
 
-        # IOU
+        # Intersection area
         inter_w = (inter_x2 - inter_x1).clamp(min=0)
         inter_h = (inter_y2 - inter_y1).clamp(min=0)
         inter = inter_w * inter_h
 
-        union = inter_w*inter_h - inter
+        # IOU
+        union = area_a + area_b - inter
+        ious = inter / (union + 1e-7)
 
-        return inter/union
+        return ious
 
 
 
@@ -75,7 +85,7 @@ class YOLOLoss(nn.Module):
         The next 20 is class prediction
         """
 
-        assert preds.shape == target.shape
+        assert preds.shape == targets.shape
 
         N, S, *_ = preds.shape
         B, C = config.B, config.C
@@ -89,8 +99,17 @@ class YOLOLoss(nn.Module):
         lambda_coord, lambda_noobj = 5, 0.5
         obj_i = torch.zeros((N, S, S), dtype=torch.bool) # Whether grid cell has an object
         obj_ij = torch.zeros((N, S, S, B), dtype=torch.bool) # Whether this bounding box is responsible
+
+        ious = self.batch_iou(preds, targets)
+
         
 
+
+
+
+
+        
+        return 0
         for i in range(S):
             for j in range(S):
                 target = targets[:, i, j, :]

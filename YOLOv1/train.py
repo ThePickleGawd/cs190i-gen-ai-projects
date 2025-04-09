@@ -54,9 +54,6 @@ for epoch in range(config.EPOCHS):
         epoch_loss += loss.item()
         print(f"[Epoch {epoch+1}] Batch Loss: {loss.item():.4f}")
 
-        # remove `break` to train on the full dataset
-        break
-
     avg_loss = epoch_loss / len(train_dataloader)
     losses.append(avg_loss)
     print(f"Epoch {epoch+1} Average Loss: {avg_loss:.4f}")

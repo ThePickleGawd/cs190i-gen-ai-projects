@@ -45,7 +45,7 @@ for _ in range(config.EPOCHS):
         loss = loss_fn(out, targets)
         
         optim.zero_grad()
-        loss.backwards()
+        loss.backward()
         optim.step()
         break
         

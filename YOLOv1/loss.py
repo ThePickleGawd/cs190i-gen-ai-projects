@@ -72,17 +72,9 @@ class YOLOLoss(nn.Module):
 
 
 
-    def forward(self, preds, targets):
+    def forward(self, preds: torch.Tensor, targets: torch.Tensor):
         """
-        (N, S, S, B*(5+C))
-
-        SxS cells (7x7)
-        Each cell is B*(5+C) depth
-        First 5 is bounding box, Next C are class. Repeate B times
-        We can directly compare since the label data gives us both
-        - The IOU is how much they intersect vs how much they total take up
-        - We correspond them correctly based on the highest IOU
-        The next 20 is class prediction
+        preds, targets: (N, S, S, B*(5+C))
         """
 
         assert preds.shape == targets.shape
@@ -97,18 +89,31 @@ class YOLOLoss(nn.Module):
 
         # From paper
         lambda_coord, lambda_noobj = 5, 0.5
-        obj_i = torch.zeros((N, S, S), dtype=torch.bool) # Whether grid cell has an object
-        obj_ij = torch.zeros((N, S, S, B), dtype=torch.bool) # Whether this bounding box is responsible
+        obj_i = (targets[..., 4] > 0).any(dim=3).unsqueeze(-1).float() # (N, S, S, 1)  1.0 if any confidence in grid cell is >0
 
+        # Each box has B iou targets
+        # Each box is responsible for one with best iou
+        # gnd_truth is targets but the box is at correct spot for the pred
         ious = self.batch_iou(preds, targets)
+        responsible = torch.argmax(ious, dim=-1, keepdim=True)
+        responsible = responsible.expand(-1, -1, -1, -1, targets.size(-1))
 
+        gnd_truth = torch.gather(targets, dim=3, index=responsible) # (N, S, S, B, 5+C)
+
+        ## Bounding Box Loss
+        
+        # x,y loss
+        loss += torch.sum(obj_i * (gnd_truth[..., 0] - preds[..., 0]) ** 2)
+        loss += torch.sum(obj_i * (gnd_truth[..., 1] - preds[..., 1]) ** 2)
+
+        # w, h loss
+        loss += torch.sum(obj_i * ((gnd_truth[..., 2].sqrt() - preds[..., 2].sqrt()) ** 2))
+        loss += torch.sum(obj_i * ((gnd_truth[..., 3].sqrt() - preds[..., 3].sqrt()) ** 2))
+
+
+        return loss
         
 
-
-
-
-
-        
         return 0
         for i in range(S):
             for j in range(S):

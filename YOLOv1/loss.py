@@ -88,23 +88,19 @@ class YOLOLoss(nn.Module):
         # x,y loss
         loss += lambda_coord * torch.sum(obj_i * (gnd_truth[..., 0] - preds[..., 0]) ** 2)
         loss += lambda_coord * torch.sum(obj_i * (gnd_truth[..., 1] - preds[..., 1]) ** 2)
-        print(torch.isnan(loss).any().item())
-
+        
         # w, h loss
         loss += lambda_coord * torch.sum(obj_i * ((gnd_truth[..., 2].sqrt() - preds[..., 2].sqrt()) ** 2))
         loss += lambda_coord * torch.sum(obj_i * ((gnd_truth[..., 3].sqrt() - preds[..., 3].sqrt()) ** 2))
-        print(torch.isnan(loss).any().item())
 
         ## Confidence Loss
 
         conf_preds = preds[..., 4]
         conf_targets = gnd_truth[..., 4]
-        print(torch.isnan(loss).any().item())
 
         # Note difference. Only apply lambda_noobj when no obj in entire cell
         loss += torch.sum(obj_i * (conf_targets - conf_preds) ** 2)
         loss += lambda_noobj * torch.sum((1 - obj_i) * (conf_targets - conf_preds) ** 2)
-        print(torch.isnan(loss).any().item())
 
         ## Classification Loss
 
@@ -112,6 +108,5 @@ class YOLOLoss(nn.Module):
         class_preds = preds[..., 5:]
         class_targets = gnd_truth[..., 5:].argmax(-1)
         loss += F.cross_entropy(class_preds.reshape(-1, C), class_targets.reshape(-1))
-        print(torch.isnan(loss).any().item())
 
         return loss / N

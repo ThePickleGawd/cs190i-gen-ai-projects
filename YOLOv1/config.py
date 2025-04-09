@@ -12,6 +12,8 @@ S = 7
 B = 2
 C = 20
 
+EPSILON = 1e-6
+
 # 2012
 VOC_CLASSES = [
     "aeroplane", "bicycle", "bird", "boat", "bottle", 

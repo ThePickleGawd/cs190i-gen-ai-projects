@@ -69,7 +69,7 @@ class YOLOLoss(nn.Module):
         preds = preds.view(N, S, S, B, 5 + C)
         targets = targets.view(N, S, S, B, 5 + C)
 
-        loss = 0.0
+        loss = torch.tensor(0.0, device=preds.device)
 
         # From paper
         lambda_coord, lambda_noobj = 5, 0.5
@@ -90,8 +90,8 @@ class YOLOLoss(nn.Module):
         loss += lambda_coord * torch.sum(obj_i * (gnd_truth[..., 1] - preds[..., 1]) ** 2)
         
         # w, h loss
-        loss += lambda_coord * torch.sum(obj_i * ((gnd_truth[..., 2].sqrt() - preds[..., 2].sqrt()) ** 2))
-        loss += lambda_coord * torch.sum(obj_i * ((gnd_truth[..., 3].sqrt() - preds[..., 3].sqrt()) ** 2))
+        loss += lambda_coord * torch.sum(obj_i * ((gnd_truth[..., 2].clamp(min=config.EPSILON).sqrt() - preds[..., 2].clamp(min=config.EPSILON).sqrt()) ** 2))
+        loss += lambda_coord * torch.sum(obj_i * ((gnd_truth[..., 3].clamp(min=config.EPSILON).sqrt() - preds[..., 3].clamp(min=config.EPSILON).sqrt()) ** 2))
 
         ## Confidence Loss
 

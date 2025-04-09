@@ -64,6 +64,7 @@ for epoch in range(config.EPOCHS):
         'model_state_dict': model.state_dict(),
         'optimizer_state_dict': optim.state_dict(),
         'loss': avg_loss,
-    }, f'checkpoint_epoch_{epoch+1}.pth')
+    }, f'checkpoints/checkpoint_epoch_{epoch+1}.pth')
 
-    
+
+torch.save(model.state_dict(), f"checkpoints/model.pth")

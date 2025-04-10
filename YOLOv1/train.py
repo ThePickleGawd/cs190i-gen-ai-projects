@@ -41,8 +41,8 @@ for epoch in range(config.EPOCHS):
         out = model(images)
         loss = loss_fn(out, targets)
 
-        with open('log.txt', 'a') as f:
-            print(out.flatten(), file=f)
+        # with open('log.txt', 'a') as f:
+        #     print(out.flatten(), file=f)
 
         optim.zero_grad()
         loss.backward()

@@ -111,7 +111,5 @@ class YOLO(nn.Module):
         # output = output.view(-1, config.S, config.S, config.B, 5 + config.C)
         # output[..., :5] = F.sigmoid(output[..., :5])
 
-        print(torch.max(output.flatten()))
-
         output = output.view(-1, config.S, config.S, self.depth)
         return output

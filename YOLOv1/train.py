@@ -41,13 +41,15 @@ for epoch in range(config.EPOCHS):
         out = model(images)
         loss = loss_fn(out, targets)
 
+        with open('log.txt', 'a') as f:
+            print(out.flatten(), file=f)
+
         optim.zero_grad()
         loss.backward()
         optim.step()
 
         epoch_loss += loss.item()
-        if batch_idx % 10 == 0:
-            print(f"[Epoch {epoch+1}] Batch Loss: {loss.item():.4f}")
+        print(f"[Epoch {epoch+1}] Batch Loss: {loss.item():.4f}")
 
         batch_idx += 1
 

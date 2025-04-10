@@ -3,7 +3,7 @@ import torch
 # Train settings
 EPOCHS = 1
 DATA_PATH = "data"
-BATCH_SIZE = 8
+BATCH_SIZE = 1
 
 device = torch.device("cpu")
 if torch.cuda.is_available():

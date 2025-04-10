@@ -108,9 +108,10 @@ class YOLO(nn.Module):
         output = self.out(X)
 
         # x,y,w,h,conf sigmoid for each bounding box
-        output = output.view(-1, config.S, config.S, config.B, 5 + config.C)
-        output[..., :5] = F.sigmoid(output[..., :5])
+        # output = output.view(-1, config.S, config.S, config.B, 5 + config.C)
+        # output[..., :5] = F.sigmoid(output[..., :5])
 
-        # Back to expected size
+        print(torch.max(output.flatten()))
+
         output = output.view(-1, config.S, config.S, self.depth)
         return output

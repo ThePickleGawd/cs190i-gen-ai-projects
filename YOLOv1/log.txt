@@ -1,0 +1,248 @@
+tensor([ 0.4813,  0.4676,  0.4969,  ...,  0.0143, -0.0379, -0.1379],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 0.0570,  0.1292,  0.5612,  ..., -3.3216, -4.0461,  1.6714],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 0.4574,  0.3039,  0.6403,  ..., -3.4225,  4.1237, 22.5779],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 2.5772e-06,  1.4809e-03,  2.5189e-01,  ...,  5.1040e-01,
+        -3.9666e-01, -8.8750e-01], device='mps:0', grad_fn=<ViewBackward0>)
+tensor([nan, nan, nan,  ..., nan, nan, nan], device='mps:0',
+       grad_fn=<ViewBackward0>)
+tensor([nan, nan, nan,  ..., nan, nan, nan], device='mps:0',
+       grad_fn=<ViewBackward0>)
+tensor([nan, nan, nan,  ..., nan, nan, nan], device='mps:0',
+       grad_fn=<ViewBackward0>)
+tensor([nan, nan, nan,  ..., nan, nan, nan], device='mps:0',
+       grad_fn=<ViewBackward0>)
+tensor([nan, nan, nan,  ..., nan, nan, nan], device='mps:0',
+       grad_fn=<ViewBackward0>)
+tensor([ 0.5604,  0.5682,  0.4023,  ...,  0.0999,  0.0067, -0.0035],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 0.2325,  0.4957,  0.0587,  ...,  0.8997, -3.8335,  1.0104],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([-0.1629,  0.0673,  0.2432,  ...,  0.2078,  0.1036,  0.0162],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([nan, nan, nan,  ..., nan, nan, nan], device='mps:0',
+       grad_fn=<ViewBackward0>)
+tensor([nan, nan, nan,  ..., nan, nan, nan], device='mps:0',
+       grad_fn=<ViewBackward0>)
+tensor([nan, nan, nan,  ..., nan, nan, nan], device='mps:0',
+       grad_fn=<ViewBackward0>)
+tensor([nan, nan, nan,  ..., nan, nan, nan], device='mps:0',
+       grad_fn=<ViewBackward0>)
+tensor([nan, nan, nan,  ..., nan, nan, nan], device='mps:0',
+       grad_fn=<ViewBackward0>)
+tensor([nan, nan, nan,  ..., nan, nan, nan], device='mps:0',
+       grad_fn=<ViewBackward0>)
+tensor([nan, nan, nan,  ..., nan, nan, nan], device='mps:0',
+       grad_fn=<ViewBackward0>)
+tensor([nan, nan, nan,  ..., nan, nan, nan], device='mps:0',
+       grad_fn=<ViewBackward0>)
+tensor([nan, nan, nan,  ..., nan, nan, nan], device='mps:0',
+       grad_fn=<ViewBackward0>)
+tensor([-0.3182, -0.0379,  0.1013,  ...,  0.4295, -0.6291, -0.0206],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([nan, nan, nan,  ..., nan, nan, nan], device='mps:0',
+       grad_fn=<ViewBackward0>)
+tensor([nan, nan, nan,  ..., nan, nan, nan], device='mps:0',
+       grad_fn=<ViewBackward0>)
+tensor([nan, nan, nan,  ..., nan, nan, nan], device='mps:0',
+       grad_fn=<ViewBackward0>)
+tensor([nan, nan, nan,  ..., nan, nan, nan], device='mps:0',
+       grad_fn=<ViewBackward0>)
+tensor([nan, nan, nan,  ..., nan, nan, nan], device='mps:0',
+       grad_fn=<ViewBackward0>)
+tensor([nan, nan, nan,  ..., nan, nan, nan], device='mps:0',
+       grad_fn=<ViewBackward0>)
+tensor([-0.1398,  0.3562, -0.0659,  ..., -0.0482, -0.4465, -0.0201],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([-2.6577, -1.0211,  0.7959,  ..., -0.2004, -0.9797,  1.5543],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([-0.3771, -0.6161,  0.5142,  ..., -0.3206, -0.2958,  0.4677],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([-0.0531, -1.6286, -0.3586,  ..., -0.4730,  0.6662,  0.9021],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([-1.8654,  0.5241,  0.0356,  ...,  1.6651, -0.9589, -1.1968],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([-0.5659,  1.6418,  1.3956,  ...,  1.7461, -1.6319,  5.1507],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([-5.2563, -1.9119,  0.9871,  ...,  4.6896, -6.0296, -1.4393],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ -3.6729, -11.2319,  -3.1868,  ...,  -4.3254,   7.8719,  -2.1704],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([-4.5800, -7.4809, -6.5156,  ..., 11.6605, -6.4048, -1.9866],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 0.5227, -5.0508, -3.3341,  ..., -3.7938, -4.8559, -2.3088],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 5.6111,  5.5679, -2.9065,  ...,  0.0159, -3.4444,  3.4029],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 3.3355, -0.5166,  2.3800,  ...,  6.4465, -8.2890, -4.2571],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([  9.1932, -13.2850, -13.5455,  ...,  -4.4825,   6.7939,  -8.2720],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ -0.5210,  -0.5689,   1.2838,  ...,  -9.6954,   9.3384, -11.8955],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([12.8572, -6.2641,  8.0816,  ..., -5.2915, -3.5294, -1.6667],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([-5.0383, -1.9877,  5.4545,  ...,  6.4765,  7.9330,  7.0360],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 0.8794,  4.7866, -1.7582,  ...,  4.7016, -0.4728,  3.2445],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([  0.1284, -12.2354,   1.7567,  ..., -11.7633,  10.2285,  -0.2692],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([  7.3347, -13.8339,   4.3181,  ...,  -5.5170,  -7.3674, -10.2255],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([  7.2552,   0.9068,  13.5648,  ..., -17.4326,  -8.0177,   8.7770],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([  9.6098,  -8.9822,   6.9842,  ..., -29.5614, -13.7998,  -0.0540],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 10.7951,   3.9855,  -4.0550,  ...,  -8.2575, -17.8974,  -4.2836],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([  9.7600,  -8.8950,  10.0106,  ..., -11.6965,  -9.2935,  -5.5882],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([  3.2085,   8.5342,  -0.2129,  ...,  -9.9179, -15.5542,  -6.7792],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 13.2137,   3.3650,  -8.5503,  ...,   1.3553, -19.0077,  -3.7785],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([14.7173, -0.6131, -3.8295,  ..., -2.9172, -9.4713, -5.2869],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([  3.5550,   4.7187,  -3.2548,  ...,   9.5259, -21.0436,   4.2855],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 11.8461,   4.0506, -19.2254,  ...,  -1.4967,  -9.2297,  -7.4536],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([15.1041, -1.2158, 13.7139,  ..., -9.4580, -4.8525,  6.8288],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 7.8438,  4.7324,  2.5939,  ..., -5.0342, -8.0768,  6.6179],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 0.1972, 10.9435,  4.3317,  ..., -0.3440, -5.2191, -8.6920],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 9.0342, 12.9566,  1.5627,  ..., -1.5749, -3.1671,  1.6214],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ -0.1821,   6.4708,   7.0129,  ...,  10.9775,   1.6775, -19.7346],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([  7.9347,   2.9411,   1.9850,  ...,   3.2398,  -0.5826, -15.0145],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 13.7915,   1.2947,  -2.9013,  ...,   2.2510, -20.8288,   0.5665],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ -4.5633,  -1.5551,   6.0357,  ...,  -6.8301, -15.7670, -10.1853],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([  2.4524,   7.7209,  11.2244,  ...,  -6.4013, -17.8767, -20.0201],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ -0.9215,   3.1245,   1.4590,  ...,  -0.0630,  -3.1724, -10.1048],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 10.9623,  -4.3262,   1.0163,  ...,  -0.3805, -13.0239, -13.9534],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 8.7261,  8.9206,  1.1376,  ..., -5.2273,  1.3471, -6.9043],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 15.6562,  -1.0465,   7.6978,  ...,   8.9090,   6.5396, -14.6342],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([15.4895,  6.2310, -9.6353,  ..., -8.1857, -1.0816,  1.7362],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([18.8958,  6.0630,  2.2184,  ..., 12.5033, -5.6859, -3.0359],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 34.1984,  -0.6354,   2.4889,  ...,   9.3000, -16.5099, -17.6632],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 18.2906,  22.7828,  31.4797,  ..., -16.5000, -19.3805,  -8.6278],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([14.2572, -9.5459,  1.2660,  ...,  3.9807, -8.8485, -2.9837],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([17.3088,  6.6862, 10.8731,  ..., -1.3743,  9.2956, -5.4936],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 27.1691,   4.3237,  -3.2643,  ...,  -4.2666, -14.7771,  -3.6699],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 10.5021,  -7.5614,  -1.4927,  ..., -15.6780,  -7.1874,  -1.4101],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ -0.3361,  -8.7127,  -5.6588,  ...,  -6.9281,   9.0370, -10.4270],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 14.7556,   3.5835,   0.0352,  ..., -10.4263,  -0.9870, -10.4116],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 10.6388,   4.0509,   9.3953,  ...,  -3.4199, -22.7117,  -4.5091],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([  0.9195,   0.0542,   6.7357,  ...,   5.7029,   8.2330, -10.8226],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([-8.6183, -4.6703,  0.7336,  ..., -5.4033, -5.6435, -9.9787],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([-8.4340, -6.2360,  3.0834,  ...,  4.9761, 12.4957,  0.9531],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([  1.3509, -17.5101,   5.7434,  ...,  -4.2529,   5.2101,  -1.7592],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([  4.5290, -24.3200,  10.6770,  ...,  -5.0105,  -4.0128, -23.0530],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([  7.6879,  -8.0626,   9.2719,  ..., -12.8424,   3.3332,  -5.7987],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([  1.6674,  -9.7371,   9.0455,  ..., -13.8769,   1.9289, -18.7103],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([  7.5697, -19.2054,   7.8836,  ..., -13.6866,   5.5793,  -9.6522],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ -1.3081, -11.7955,  -2.4733,  ..., -16.4605,  11.2830,   0.9986],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ -0.1649, -12.1796,  -8.3100,  ..., -20.7016,   4.0246, -24.1256],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 12.9021,  -7.7091, -11.2044,  ..., -18.0041,   0.0415, -13.8369],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([  7.9916,   0.3340,   2.2131,  ..., -14.3237,   7.9160, -11.0454],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([  4.1178, -10.5271,   0.2834,  ...,  -9.6776,   1.5785, -15.3478],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([  7.9774, -12.0143,  -4.3384,  ..., -16.1280, -10.1421, -18.2967],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 4.9949, -9.0605,  5.6300,  ..., -2.8199, -4.7652, -6.2847],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 4.3498, -0.8232, -1.3518,  ...,  1.2917,  7.5367, -8.1204],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 4.0617,  6.7265, 10.4365,  ..., -9.7745, -1.1089, -7.3133],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 12.3349,  -8.1884,  19.5951,  ...,  -5.6495,   5.6448, -13.2479],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([  7.0034,  -9.7254,   1.7899,  ...,   3.1204,   0.7393, -14.0931],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([12.0227,  2.6117,  4.8982,  ..., 14.9625,  6.4027,  0.9460],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 8.5094,  9.8796, -6.0239,  ..., 15.2054, 12.0884, -3.3195],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 7.5524, -2.3089, 14.4624,  ...,  9.0277,  1.2407, -3.6580],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ -4.4550, -19.3770,   9.8747,  ...,  -1.1455,  -1.8849,  -2.8022],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 25.7927, -14.3662,  17.4682,  ...,   1.7223,  16.6117, -10.2398],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 21.9621, -12.0824,  12.0884,  ...,   4.9766,   5.2490,  -2.1023],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([27.0936,  8.2936, 14.6781,  ..., 14.4906, -3.9794, -0.0318],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 17.7932, -18.2855,  12.9314,  ...,  15.9853,   0.2333,  -2.0466],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([12.8106, -8.2538, 14.6754,  ..., 12.3575,  3.9173, -6.1898],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([18.5875,  5.5069, -7.2802,  ..., 18.3076, -1.7030,  2.2453],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([16.8524, -1.8314,  7.3382,  ..., 12.6839,  6.5130, -5.2988],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([13.6273,  8.5986, -7.3614,  ..., -0.1030,  1.4286, -1.8796],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 13.8288,   3.0660, -11.4040,  ...,  34.5207,   2.8794,   7.6208],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([15.1686, -3.7247, -3.4166,  ..., 19.0536, -2.3510,  1.3995],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([12.3768,  1.0925, -4.8031,  ..., 12.2837, 12.5297, -2.3561],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([-0.0611, -0.0058, -0.4035,  ...,  0.0430,  0.1266, -0.3023],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 1.1073, -0.9534,  0.8246,  ...,  1.8784,  0.7129,  0.3508],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 0.1027, -0.9941,  2.2351,  ..., -0.8869,  3.6575, -1.4834],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([-2.4970, -6.8973, -1.0001,  ...,  0.9603, -0.0978, -6.2712],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 0.6394, -3.8683, -3.7643,  ...,  2.2912, -3.4013, -2.0582],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 3.0870, -0.2394, -3.5692,  ...,  1.4803, -1.1453, -1.1930],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([-2.6150, -6.3995, -4.2502,  ...,  1.3661,  5.6987, -2.2598],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 4.9006, -4.1357,  8.1656,  ...,  5.2429, -1.3202, -0.1657],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([10.8828, -6.1038,  0.0818,  ...,  4.4284,  1.7643,  7.1185],
+       device='mps:0', grad_fn=<ViewBackward0>)
+tensor([ 3.4807, -0.2928, -4.5974,  ...,  5.9563, -2.1655,  2.8998],
+       device='mps:0', grad_fn=<ViewBackward0>)

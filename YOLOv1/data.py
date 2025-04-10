@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 from torch.utils.data import Dataset
 from torchvision import transforms
 from torchvision.datasets import VOCDetection
@@ -26,6 +27,9 @@ class VOCDataset(Dataset):
         target = torch.zeros((config.S, config.S, depth), dtype=torch.float32)
 
         labels = info["annotation"]["object"]
+        orig_img_size = info["annotation"]["size"]
+        orig_img_w, orig_img_h = int(orig_img_size["width"]), int(orig_img_size["height"])
+
         for label in labels:
             # Get class one-hot and the bounding box info
             name, box = label["name"], label["bndbox"]
@@ -34,7 +38,13 @@ class VOCDataset(Dataset):
             one_hot = torch.zeros(config.C)
             one_hot[class_idx] = 1
 
+            # Scale bbox to config.IMG_SIZE (448x448)
             xmin, ymin, xmax, ymax = int(box["xmin"]), int(box["ymin"]), int(box["xmax"]), int(box["ymax"])
+            xmin = int(box["xmin"]) * config.IMG_SIZE[0] / orig_img_w
+            xmax = int(box["xmax"]) * config.IMG_SIZE[0] / orig_img_w
+            ymin = int(box["ymin"]) * config.IMG_SIZE[1] / orig_img_h
+            ymax = int(box["ymax"]) * config.IMG_SIZE[1] / orig_img_h
+
             conf = 1.0
 
             # Find the right slot to put it in
@@ -53,9 +63,13 @@ class VOCDataset(Dataset):
             x = (x_center - x_cell_tl) / x_cell_size
             y = (y_center - y_cell_tl) / y_cell_size
 
+            # Log scale w,h
+            w = np.log((xmax - xmin) / x_cell_size)
+            h = np.log((ymax - ymin) / y_cell_size)
+
             # Scaled w,h
-            w = (xmax - xmin) / config.IMG_SIZE[0]
-            h = (ymax - ymin) / config.IMG_SIZE[1]
+            # w = (xmax - xmin) / config.IMG_SIZE[0]
+            # h = (ymax - ymin) / config.IMG_SIZE[1]
 
             # Make box
             bbox = torch.tensor([x, y, w, h, conf])

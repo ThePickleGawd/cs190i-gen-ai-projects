@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 import config
 
@@ -84,11 +85,13 @@ class YOLO(nn.Module):
             nn.LeakyReLU(0.1),
             nn.Dropout(0.5),
             nn.Linear(4096, config.S * config.S * self.depth), 
-            nn.Sigmoid() # Not clear if original paper uses this, but we should clamp model to valid values
         )
  
     def forward(self, X):
         X = self.model(X)
         output = self.out(X)
 
-        return output.view(-1, config.S, config.S, self.depth)
+        output = output.view(-1, config.S, config.S, self.depth)
+        output[..., :5] = F.sigmoid(output[..., :5]) # x,y,w,h,conf
+
+        return output

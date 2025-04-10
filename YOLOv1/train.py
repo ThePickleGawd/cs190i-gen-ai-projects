@@ -9,14 +9,6 @@ from model import YOLO
 from loss import YOLOLoss
 import config
 
-## Config
-
-device = torch.device("cpu")
-if torch.cuda.is_available():
-    device = torch.device("cuda")
-elif torch.backends.mps.is_available():
-    device = torch.device("mps")
-
 ## Dataset
 
 ds = VOCDataset()
@@ -30,7 +22,7 @@ train_dataloader = DataLoader(ds, batch_size=config.BATCH_SIZE, collate_fn=colla
 
 ## Train
 
-model = YOLO().to(device)
+model = YOLO().to(config.device)
 model.train()
 
 # optim = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9, weight_decay=0.0005)
@@ -41,8 +33,10 @@ losses = []
 
 for epoch in range(config.EPOCHS):
     epoch_loss = 0
+
+    batch_idx = 0
     for images, targets in train_dataloader:
-        images, targets = images.to(device), targets.to(device)
+        images, targets = images.to(config.device), targets.to(config.device)
 
         out = model(images)
         loss = loss_fn(out, targets)
@@ -52,11 +46,15 @@ for epoch in range(config.EPOCHS):
         optim.step()
 
         epoch_loss += loss.item()
-        print(f"[Epoch {epoch+1}] Batch Loss: {loss.item():.4f}")
+        if batch_idx % 10 == 0:
+            print(f"[Epoch {epoch+1}] Batch Loss: {loss.item():.4f}")
+
+        batch_idx += 1
 
     avg_loss = epoch_loss / len(train_dataloader)
     losses.append(avg_loss)
     print(f"Epoch {epoch+1} Average Loss: {avg_loss:.4f}")
+    break
 
     # Save model checkpoint
     torch.save({

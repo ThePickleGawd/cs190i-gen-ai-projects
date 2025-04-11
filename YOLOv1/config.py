@@ -1,9 +1,10 @@
 import torch
 
 # Train settings
-EPOCHS = 1
+WARMUP_EPOCHS = 5
+EPOCHS = 95
 DATA_PATH = "data"
-BATCH_SIZE = 1
+BATCH_SIZE = 64
 
 device = torch.device("cpu")
 if torch.cuda.is_available():

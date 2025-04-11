@@ -4,6 +4,8 @@ import torch
 import matplotlib.pyplot as plt
 from data import VOCDataset
 from torch.utils.data import DataLoader
+from torch.optim.lr_scheduler import SequentialLR, LinearLR, CosineAnnealingLR
+from tqdm import tqdm
 
 from model import YOLO
 from loss import YOLOLoss
@@ -26,12 +28,17 @@ model = YOLO().to(config.device)
 model.train()
 
 # optim = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9, weight_decay=0.0005)
-optim = torch.optim.AdamW(model.parameters(), lr=0.001, weight_decay=0.0005)
+optim = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=0.0005)
+
+warmup = LinearLR(optim, 0.1, total_iters=config.WARMUP_EPOCHS)
+main_sched = CosineAnnealingLR(optim, T_max=config.EPOCHS)
+scheduler = SequentialLR(optim, schedulers=[warmup, main_sched], milestones=[5])
+
 loss_fn = YOLOLoss()
 
 losses = []
 
-for epoch in range(config.EPOCHS):
+for epoch in tqdm(range(config.WARMUP_EPOCHS + config.EPOCHS)):
     epoch_loss = 0
 
     batch_idx = 0
@@ -41,20 +48,13 @@ for epoch in range(config.EPOCHS):
         out = model(images)
         loss = loss_fn(out, targets)
 
-        # Debug exploding outputs
-        print("Output stats:", out.min().item(), out.max().item(), out.mean().item())
-
         optim.zero_grad()
         loss.backward()
-
-        # Debug gradient explosion
-        for name, param in model.named_parameters():
-            if param.grad is not None:
-                print(f"Grad {name}: max {param.grad.abs().max().item():.4f}")
-
         optim.step()
 
         epoch_loss += loss.item()
         print(f"[Epoch {epoch+1}] Batch Loss: {loss.item():.4f}")
 
         batch_idx += 1
+    
+    scheduler.step()

@@ -88,15 +88,13 @@ class YOLOLoss(nn.Module):
         loss += lambda_coord * torch.sum(obj_ij.float() * (gnd_truth[..., 1] - preds[..., 1]) ** 2)
 
         # w,h loss no sqrt
-        loss += lambda_coord * torch.sum(obj_ij.float() * (gnd_truth[..., 2] - preds[..., 2]) ** 2)
-        loss += lambda_coord * torch.sum(obj_ij.float() * (gnd_truth[..., 3] - preds[..., 3]) ** 2)
+        loss += lambda_coord * torch.sum(obj_ij.float() * (torch.sqrt(torch.exp(gnd_truth[..., 2])) - torch.sqrt(torch.exp(preds[..., 2]))) ** 2)
+        loss += lambda_coord * torch.sum(obj_ij.float() * (torch.sqrt(torch.exp(gnd_truth[..., 3])) - torch.sqrt(torch.exp(preds[..., 3]))) ** 2)
 
         ## Confidence Loss
 
         conf_preds = preds[..., 4]
         conf_targets = gnd_truth[..., 4]
-
-        # Note difference. Only apply lambda_noobj when no obj in entire cell
         loss += torch.sum(obj_ij.float() * (conf_targets - conf_preds) ** 2)
         loss += lambda_noobj * torch.sum((1 - obj_ij.float()) * (conf_targets - conf_preds) ** 2)
 
@@ -108,3 +106,30 @@ class YOLOLoss(nn.Module):
         loss += F.cross_entropy(class_preds.reshape(-1, C), class_targets.reshape(-1))
 
         return loss / N
+    
+
+
+if __name__ == "__main__":
+    N = 2  # batch size
+    S = config.S
+    B = config.B
+    C = config.C
+
+    # Initialize preds and targets as zeros
+    preds = torch.zeros((N, S, S, B * (5 + C)), device=config.device)
+    targets = torch.zeros((N, S, S, B * (5 + C)), device=config.device)
+
+    # Add one object to a single cell in batch 0
+    cell_x, cell_y = 3, 4
+    targets[0, cell_y, cell_x, 0:5] = torch.tensor([0.5, 0.5, 0.0, 0.0, 1.0])  # x,y,w,h,conf
+    targets[0, cell_y, cell_x, 5 + 7] = 1.0  # class 7 one-hot
+
+    # Add similar prediction with slightly off values
+    preds[0, cell_y, cell_x, 0:5] = torch.tensor([0.4, 0.6, 0.1, -0.1, 0.9])
+    preds[0, cell_y, cell_x, 5 + 7] = 0.9
+
+    # Run loss
+    loss_fn = YOLOLoss().to(config.device)
+    loss = loss_fn(preds, targets)
+
+    print("Loss when most cells are 0:", loss.item())

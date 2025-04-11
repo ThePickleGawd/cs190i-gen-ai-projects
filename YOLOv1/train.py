@@ -41,30 +41,20 @@ for epoch in range(config.EPOCHS):
         out = model(images)
         loss = loss_fn(out, targets)
 
-        # with open('log.txt', 'a') as f:
-        #     print(out.flatten(), file=f)
+        # Debug exploding outputs
+        print("Output stats:", out.min().item(), out.max().item(), out.mean().item())
 
         optim.zero_grad()
         loss.backward()
+
+        # Debug gradient explosion
+        for name, param in model.named_parameters():
+            if param.grad is not None:
+                print(f"Grad {name}: max {param.grad.abs().max().item():.4f}")
+
         optim.step()
 
         epoch_loss += loss.item()
         print(f"[Epoch {epoch+1}] Batch Loss: {loss.item():.4f}")
 
         batch_idx += 1
-
-    avg_loss = epoch_loss / len(train_dataloader)
-    losses.append(avg_loss)
-    print(f"Epoch {epoch+1} Average Loss: {avg_loss:.4f}")
-    break
-
-    # Save model checkpoint
-    torch.save({
-        'epoch': epoch,
-        'model_state_dict': model.state_dict(),
-        'optimizer_state_dict': optim.state_dict(),
-        'loss': avg_loss,
-    }, f'checkpoints/checkpoint_epoch_{epoch+1}.pth')
-
-
-torch.save(model.state_dict(), f"checkpoints/model.pth")

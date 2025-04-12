@@ -1,10 +1,10 @@
 import torch
 
 # Train settings
-WARMUP_EPOCHS = 5
 EPOCHS = 95
 DATA_PATH = "data"
 BATCH_SIZE = 64
+LEARNING_RATE = 1e-4
 
 device = torch.device("cpu")
 if torch.cuda.is_available():

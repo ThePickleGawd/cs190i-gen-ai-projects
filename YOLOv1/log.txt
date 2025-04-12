@@ -1,1 +1,27 @@
 
+PS C:\Users\dylan\Documents\Coding\cs190i\YOLOv1> uv run .\train.py
+Using device: cuda
+  0%|                                                                                                                                                                                                                                                                                               | 0/100 [00:00<?, ?it/s]Batch Loss: 82.95101928710938
+Batch Loss: 77.59567260742188
+Batch Loss: 72.84810638427734
+Batch Loss: 80.04961395263672
+Batch Loss: 83.26546478271484
+Batch Loss: 65.5662612915039
+Batch Loss: 60.49321746826172
+Batch Loss: 68.84291076660156
+Batch Loss: 48.53239059448242
+[Epoch 1] Average Loss: 11711.6421
+  1%|██▋                                                                                                                                                                                                                                                                               | 1/100 [25:09<41:30:25, 1509.34s/it]Batch Loss: 61.05461883544922
+Batch Loss: 108.60847473144531
+Batch Loss: 47.24361801147461
+Batch Loss: 957.3429565429688
+Batch Loss: 411.2829284667969
+Batch Loss: nan
+Batch Loss: nan
+  1%|██▋                                                                                                                                                                                                                                                                               | 1/100 [41:38<68:41:56, 2498.15s/it]
+Traceback (most recent call last):
+  File "C:\Users\dylan\Documents\Coding\cs190i\YOLOv1\train.py", line 55, in <module>
+    epoch_loss += loss.item()
+                  ^^^^^^^^^^^
+KeyboardInterrupt
+PS C:\Users\dylan\Documents\Coding\cs190i\YOLOv1> 

@@ -38,7 +38,9 @@ def xywh_to_xyxy(box):
 
 def batch_iou(a: torch.Tensor, b: torch.Tensor):
     """
-    a, b: (N, S, S, B, 5+C)
+    a: (N, S, S, B, 5+C)
+    b: (N, S, S, B, 5+C)
+
     output: (N, S, S, B, B)
 
     Compares iou across every pred box and target box.
@@ -80,7 +82,17 @@ def batch_iou(a: torch.Tensor, b: torch.Tensor):
     return ious
 
 def batch_to_mAP_list(preds: torch.Tensor, targets: torch.Tensor):
+    """
+    preds: (N, S, S, B * (5+C))
+    targets: (N, S, S, B * (5+C))
+
+    Converts model output and targets to coco mAP format
+    """
+
     N = preds.shape[0]
+
+    preds = preds.view(N, config.S, config.S, config.B, 5 + config.C)
+    targets = targets.view(N, config.S, config.S, config.B, 5 + config.C)
 
     # Get absolute image coordinates: (N, S, S, B, 5+C) => (N, S*S, B, 4)
     preds_xyxy = xywh_to_xyxy(preds[..., :4]).view(N, config.S * config.S, config.B, 4)
@@ -98,11 +110,11 @@ def batch_to_mAP_list(preds: torch.Tensor, targets: torch.Tensor):
 
         for s in range(config.S * config.S):
             for b in range(config.B):
-                pred_boxes.append(xywh_to_xyxy(preds_xyxy[idx, s, b]))
+                pred_boxes.append(preds_xyxy[idx, s, b, :])
                 pred_labels.append(torch.argmax(preds[idx, s, b, 5:]).item())
                 pred_scores.append(preds[idx, s, b, 4])
 
-                target_boxes.append(targets_xyxy[idx, s, b])
+                target_boxes.append(targets_xyxy[idx, s, b, :])
                 target_labels.append(torch.argmax(targets[idx, s, b, 5:]).item())
 
         preds_list.append({

@@ -23,7 +23,6 @@ state_dict = torch.load("checkpoints/model.pth", map_location=config.device)
 model.load_state_dict(state_dict)
 model.eval()
 
-
 metric = MeanAveragePrecision()
 
 with torch.no_grad():
@@ -33,10 +32,10 @@ with torch.no_grad():
 
         preds = model(images)
 
-        # TODO: Calculate mAP
+        # Calculate mAP
         preds_list, targets_list = batch_to_mAP_list(preds, targets)
         metric.update(preds=preds_list, target=targets_list)
-
+    print(metric.compute())
 
 
 # TODO: Save metric

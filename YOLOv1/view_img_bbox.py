@@ -5,75 +5,80 @@ import matplotlib.patches as patches
 from torch.utils.data import DataLoader
 
 from data import VOCDataset
-from model import YOLO
+from model import YOLOv1
 import config
 
+# Load model
+model = YOLOv1().to(config.device)
+state_dict = torch.load("checkpoints/model.pth", map_location=config.device)
+model.load_state_dict(state_dict)
+model.eval()
 
-# model = YOLO().to(config.device)
-# checkpoint = torch.load(f"checkpoints/checkpoint_epoch_9.pth")
-# model.load_state_dict(checkpoint['model_state_dict'])
-
+# Load dataset and sample one image
 dataset = VOCDataset("val")
-
-# dataloader = DataLoader(dataset, batch_size=1)
-import random
-
-idx = random.randint(0, len(dataset) - 1)
+idx = torch.randint(0, len(dataset), (1,)).item()
 img, target = dataset[idx]
-img = img.unsqueeze(0)  # Add batch dimension
+img = img.unsqueeze(0)
 target = target.unsqueeze(0)
 
-# out = model(img)
+# Run model
+with torch.no_grad():
+    out = model(img.to(config.device)).cpu()
 
-# S = out.shape[1]
-# B = 2  # adjust as needed
-# C = (out.shape[-1] // B) - 5
-
-img = img.squeeze().permute(1, 2, 0).cpu().numpy()  # CHW to HWC
+# Image setup
+img = img.squeeze().permute(1, 2, 0).cpu().numpy()
 img_h, img_w = img.shape[:2]
-x_cell_size = img_w / config.S 
+x_cell_size = img_w / config.S
 y_cell_size = img_h / config.S
 
+# Reshape target and prediction
+target = target[0].view(config.S, config.S, config.B, 5 + config.C)
+pred = out[0].view(config.S, config.S, config.B, 5 + config.C)
+
+# Plot
 fig, ax = plt.subplots()
 ax.imshow(img)
 
-# Draw grid lines
+# Draw grid
 for i in range(1, config.S):
     ax.axhline(i * y_cell_size, color='white', linestyle='--', linewidth=0.5)
     ax.axvline(i * x_cell_size, color='white', linestyle='--', linewidth=0.5)
 
-# Loop through grid
+def draw_box(i, j, box, color, label=None):
+    x, y, w, h = box[:4]
+    box_x = (j + x) * x_cell_size
+    box_y = (i + y) * y_cell_size
+    box_w = np.exp(w) * x_cell_size
+    box_h = np.exp(h) * y_cell_size
+    top_left_x = box_x - box_w / 2
+    top_left_y = box_y - box_h / 2
+
+    rect = patches.Rectangle((top_left_x, top_left_y), box_w, box_h,
+                             linewidth=2, edgecolor=color, facecolor='none')
+    ax.add_patch(rect)
+    ax.plot(box_x, box_y, marker='o', color=color, markersize=3)
+
+    if label:
+        ax.text(top_left_x, top_left_y - 5, label,
+                color='white', fontsize=8, backgroundcolor=color)
+
+# Draw boxes with labels
 for i in range(config.S):
     for j in range(config.S):
         for b in range(config.B):
-            start = b * (5 + config.C)
-            x, y, w, h, conf = target[0, i, j, start:start+5]
+            t_box = target[i, j, b]
+            p_box = pred[i, j, b]
 
-            if conf < 0.5:
-                continue  # skip low-confidence boxes
+            if t_box[4] > 0.5:
+                t_class_idx = torch.argmax(t_box[5:]).item()
+                t_label = config.VOC_CLASSES[t_class_idx]
+                draw_box(i, j, t_box, 'r', label=t_label)
 
-            classes = target.view(-1, config.S, config.S, config.B, 5+config.C)
-            print(classes[0, i, j, :, :])
+            if p_box[4] > 0.5:
+                p_class_idx = torch.argmax(p_box[5:]).item()
+                p_label = config.VOC_CLASSES[p_class_idx]
+                draw_box(i, j, p_box, 'g', label=p_label)
 
-            # x, y are relative to cell → convert to global coordinates
-            box_x = ((j + x.item()) * x_cell_size) 
-            box_y = ((i + y.item()) * y_cell_size)
-            box_w = np.exp(w.item()) * x_cell_size
-            box_h = np.exp(h.item()) * y_cell_size
-
-            # Convert center x,y to top-left corner
-            top_left_x = box_x - box_w / 2
-            top_left_y = box_y - box_h / 2
-
-            rect = patches.Rectangle((top_left_x, top_left_y), box_w, box_h,
-                                     linewidth=2, edgecolor='r', facecolor='none')
-            
-            rect = patches.Rectangle((top_left_x, top_left_y), box_w, box_h,
-                         linewidth=2, edgecolor='r', facecolor='none')
-            ax.add_patch(rect)
-
-            # Draw center point
-            ax.plot(box_x, box_y, 'ro', markersize=3)
-
-
+plt.title("Red = Ground Truth, Green = Prediction + Labels")
+plt.axis('off')
 plt.show()

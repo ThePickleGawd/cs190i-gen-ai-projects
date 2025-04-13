@@ -19,7 +19,7 @@ os.makedirs("images", exist_ok=True)
 
 ## Dataset
 train_ds = VOCDataset("train")
-test_ds = VOCDataset("test")
+test_ds = VOCDataset("val")
 
 def collate_fn(batch):
     imgs, targets = zip(*batch)

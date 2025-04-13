@@ -3,11 +3,37 @@ from collections import Counter
 import config
 
 def xywh_to_xyxy(box):
+    """
+    box: (N, S, S, B, 4) where x, y are relative to cell,
+         and w, h are log-scale relative to cell size
+    returns: (N, S, S, B, 4) in absolute xyxy image coordinates
+    """
+    N, S, _, B, _ = box.shape
     x, y, w, h = box.unbind(-1)
-    x1 = x - w/2
-    y1 = y - h/2
-    x2 = x + w/2
-    y2 = y + h/2
+
+    x_cell_size = config.IMG_SIZE[0] / S
+    y_cell_size = config.IMG_SIZE[1] / S
+
+    # Compute grid offsets
+    grid_y, grid_x = torch.meshgrid(
+        torch.arange(S, device=box.device),
+        torch.arange(S, device=box.device),
+        indexing='ij'
+    )
+    grid_x = grid_x.view(1, S, S, 1).expand(N, S, S, B)
+    grid_y = grid_y.view(1, S, S, 1).expand(N, S, S, B)
+
+    # Convert to absolute positions
+    x_abs = (grid_x + x) * x_cell_size
+    y_abs = (grid_y + y) * y_cell_size
+    w_abs = torch.exp(w) * x_cell_size
+    h_abs = torch.exp(h) * y_cell_size
+
+    x1 = x_abs - w_abs / 2
+    y1 = y_abs - h_abs / 2
+    x2 = x_abs + w_abs / 2
+    y2 = y_abs + h_abs / 2
+
     return torch.stack([x1, y1, x2, y2], dim=-1)
 
 def batch_iou(a: torch.Tensor, b: torch.Tensor):
@@ -21,13 +47,19 @@ def batch_iou(a: torch.Tensor, b: torch.Tensor):
 
     a, b = a[..., :4], b[..., :4]
 
+    # Get absolute image corners
+    a = xywh_to_xyxy(a) # (N, S, S, B, 4)
+    b = xywh_to_xyxy(b) # (N, S, S, B, 4)
+
     # Get area of a and b boxes
-    area_a = (a[..., 2] * a[..., 3]).unsqueeze(4)  # shape: (N, S, S, B, 1)
-    area_b = (b[..., 2] * b[..., 3]).unsqueeze(3)  # shape: (N, S, S, 1, B)
-    
-    # Get corners. Also, broadcast so we get B "iou options" for each box
-    a = xywh_to_xyxy(a).unsqueeze(4)  # (N, S, S, B, 1, 4)
-    b = xywh_to_xyxy(b).unsqueeze(3)  # (N, S, S, 1, B, 4)
+    area_a = (a[..., 2] - a[..., 0]) * (a[..., 3] - a[..., 1])
+    area_b = (b[..., 2] - b[..., 0]) * (b[..., 3] - b[..., 1])
+
+    # Broadcast so we get B "iou options" for each box
+    a = a.unsqueeze(4) # (N, S, S, B, 1, 4)
+    b = b.unsqueeze(3) # (N, S, S, 1, B, 4)
+    area_a = area_a.unsqueeze(4) # (N, S, S, B, 1, 4)
+    area_b = area_b.unsqueeze(3) # (N, S, S, B, 1, 4)
 
     # Overlapping intesection points
     inter_x1 = torch.max(a[..., 0], b[..., 0])
@@ -49,26 +81,29 @@ def batch_iou(a: torch.Tensor, b: torch.Tensor):
 
 def batch_to_mAP_list(preds: torch.Tensor, targets: torch.Tensor):
     N = preds.shape[0]
+
+    # Get absolute image coordinates: (N, S, S, B, 5+C) => (N, S*S, B, 4)
+    preds_xyxy = xywh_to_xyxy(preds[..., :4]).view(N, config.S * config.S, config.B, 4)
+    targets_xyxy = xywh_to_xyxy(targets[..., :4]).view(N, config.S * config.S, config.B, 4)
+
     preds = preds.view(N, config.S * config.S, config.B, 5 + config.C)
     targets = targets.view(N, config.S * config.S, config.B, 5 + config.C)
 
     preds_list, targets_list = [], []
 
+    # Save boxes, scores, labels for each img in batch
     for idx in range(N):
         pred_boxes, pred_labels, pred_scores = [], [], []
         target_boxes, target_labels = [], []
 
         for s in range(config.S * config.S):
             for b in range(config.B):
-                pred_bbox = preds[idx, s, b]
-                target_bbox = targets[idx, s, b]
+                pred_boxes.append(xywh_to_xyxy(preds_xyxy[idx, s, b]))
+                pred_labels.append(torch.argmax(preds[idx, s, b, 5:]).item())
+                pred_scores.append(preds[idx, s, b, 4])
 
-                pred_boxes.append(xywh_to_xyxy(pred_bbox[:4]))
-                pred_labels.append(torch.argmax(pred_bbox[5:]).item())
-                pred_scores.append(pred_bbox[4])
-
-                target_boxes.append(xywh_to_xyxy(target_bbox[:4]))
-                target_labels.append(torch.argmax(target_bbox[5:]).item())
+                target_boxes.append(targets_xyxy[idx, s, b])
+                target_labels.append(torch.argmax(targets[idx, s, b, 5:]).item())
 
         preds_list.append({
             "boxes": torch.stack(pred_boxes),

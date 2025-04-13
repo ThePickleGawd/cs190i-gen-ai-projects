@@ -6,13 +6,16 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import os
 
-from model import YOLO
+from model import YOLOv1, YOLOv1ViT
 from loss import YOLOLoss
 import config
 
 # Make sure dirs exist
 os.makedirs("checkpoints", exist_ok=True)
 os.makedirs("images", exist_ok=True)
+
+## Config
+
 
 ## Dataset
 train_ds = VOCDataset("train")
@@ -26,7 +29,7 @@ train_dataloader = DataLoader(train_ds, batch_size=config.BATCH_SIZE, collate_fn
 test_dataloader = DataLoader(test_ds, batch_size=config.BATCH_SIZE, collate_fn=collate_fn)
 
 ## Train
-model = YOLO().to(config.device)
+model = YOLOv1().to(config.device)
 model.train()
 
 optim = torch.optim.AdamW(model.parameters(), lr=config.LEARNING_RATE)

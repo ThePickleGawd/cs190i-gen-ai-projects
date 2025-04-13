@@ -19,7 +19,10 @@ test_dataloader = DataLoader(test_ds, batch_size=config.BATCH_SIZE, collate_fn=c
 
 ## Model and Metric
 model = YOLOv1().to(config.device)
+state_dict = torch.load("checkpoints/model.pth", map_location=config.device)
+model.load_state_dict(state_dict)
 model.eval()
+
 
 metric = MeanAveragePrecision()
 

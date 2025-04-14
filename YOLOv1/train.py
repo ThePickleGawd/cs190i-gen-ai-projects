@@ -2,6 +2,7 @@ import torch
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
 import matplotlib.pyplot as plt
 import os
+import time
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 
@@ -11,7 +12,7 @@ from loss import YOLOLoss
 import config
 from utils import batch_to_mAP_list
 
-# Make sure dirs exist
+# Create necessary directories
 os.makedirs(f"checkpoints/{config.model_name}", exist_ok=True)
 os.makedirs(f"images/{config.model_name}", exist_ok=True)
 os.makedirs(f"metrics/{config.model_name}", exist_ok=True)
@@ -39,12 +40,14 @@ loss_fn = YOLOLoss()
 # Tracking
 train_losses = []
 map_scores = []
+train_times = []
 best_loss = float('inf')
 
 # Training Loop
 for epoch in range(config.EPOCHS):
     model.train()
     epoch_loss = 0
+    start_time = time.time()
 
     for images, targets in train_loader:
         images, targets = images.to(config.device), targets.to(config.device)
@@ -57,9 +60,13 @@ for epoch in range(config.EPOCHS):
 
         epoch_loss += loss.item()
 
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    train_times.append(elapsed_time)
+
     avg_loss = epoch_loss / len(train_loader)
     train_losses.append(avg_loss)
-    print(f"[Epoch {epoch+1}] Loss: {avg_loss:.4f}")
+    print(f"[Epoch {epoch+1}] Loss: {avg_loss:.4f} | Time: {elapsed_time:.2f}s")
 
     # Save best model
     if avg_loss < best_loss:
@@ -71,7 +78,7 @@ for epoch in range(config.EPOCHS):
             'loss': avg_loss,
         }, f"checkpoints/{config.model_name}/best_model.pth")
 
-    # Evaluation every 5 epochs
+    # Evaluate every 5 epochs
     if epoch % 5 == 0:
         model.eval()
         metric = MeanAveragePrecision()
@@ -88,10 +95,14 @@ for epoch in range(config.EPOCHS):
         print(f"[Epoch {epoch+1}] mAP: {mAP:.4f}")
 
     # Save metrics
-    torch.save({'losses': train_losses, 'mAP': map_scores}, f"metrics/{config.model_name}/train_metrics.pth")
+    torch.save({
+        'losses': train_losses,
+        'mAP': map_scores,
+        'train_times': train_times
+    }, f"metrics/{config.model_name}/train_metrics.pth")
 
 
-# Plot loss and mAP
+# Plot Loss and mAP
 plt.figure()
 plt.plot(train_losses, label='Loss')
 plt.plot(range(0, config.EPOCHS, 5), map_scores, label='mAP')
@@ -101,4 +112,14 @@ plt.title("Training Loss and mAP")
 plt.legend()
 plt.grid(True)
 plt.savefig(f"images/{config.model_name}/metrics.png")
+plt.close()
+
+# Plot training time
+plt.figure()
+plt.plot(train_times, label='Train Time (s)')
+plt.xlabel("Epoch")
+plt.ylabel("Time (s)")
+plt.title("Training Time per Epoch")
+plt.grid(True)
+plt.savefig(f"images/{config.model_name}/train_times.png")
 plt.close()

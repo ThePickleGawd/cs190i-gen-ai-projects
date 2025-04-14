@@ -1,23 +1,22 @@
 import torch
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
 import matplotlib.pyplot as plt
-from data import VOCDataset
-from torch.utils.data import DataLoader
-from tqdm import tqdm
 import os
+from tqdm import tqdm
+from torch.utils.data import DataLoader
 
+from data import VOCDataset
 from model import YOLOv1, YOLOv1ViT
 from loss import YOLOLoss
 import config
+from utils import batch_to_mAP_list
 
 # Make sure dirs exist
-os.makedirs("checkpoints", exist_ok=True)
-os.makedirs("images", exist_ok=True)
+os.makedirs(f"checkpoints/{config.model_name}", exist_ok=True)
+os.makedirs(f"images/{config.model_name}", exist_ok=True)
+os.makedirs(f"metrics/{config.model_name}", exist_ok=True)
 
-## Config
-
-
-## Dataset
+# Dataset and Dataloader
 train_ds = VOCDataset("train")
 test_ds = VOCDataset("val")
 
@@ -25,27 +24,30 @@ def collate_fn(batch):
     imgs, targets = zip(*batch)
     return torch.stack(imgs), torch.stack(targets)
 
-train_dataloader = DataLoader(train_ds, batch_size=config.BATCH_SIZE, collate_fn=collate_fn)
-test_dataloader = DataLoader(test_ds, batch_size=config.BATCH_SIZE, collate_fn=collate_fn)
+train_loader = DataLoader(train_ds, batch_size=config.BATCH_SIZE, collate_fn=collate_fn)
+test_loader = DataLoader(test_ds, batch_size=config.BATCH_SIZE, collate_fn=collate_fn)
 
-## Train
-model = YOLOv1().to(config.device)
-model.train()
-
+# Model, Optimizer, Loss
+models = {
+    "YOLOv1": YOLOv1,
+    "YOLOv1Vit": YOLOv1ViT,
+}
+model = models[config.model_name]().to(config.device)
 optim = torch.optim.AdamW(model.parameters(), lr=config.LEARNING_RATE)
-metric = MeanAveragePrecision()
-
 loss_fn = YOLOLoss()
-losses = []
 
-for epoch in tqdm(range(config.EPOCHS)):
+# Tracking
+train_losses = []
+map_scores = []
+best_loss = float('inf')
+
+# Training Loop
+for epoch in range(config.EPOCHS):
     model.train()
     epoch_loss = 0
-    batch_idx = 0
 
-    for images, targets in train_dataloader:
+    for images, targets in train_loader:
         images, targets = images.to(config.device), targets.to(config.device)
-
         out = model(images)
         loss = loss_fn(out, targets)
 
@@ -54,45 +56,49 @@ for epoch in tqdm(range(config.EPOCHS)):
         optim.step()
 
         epoch_loss += loss.item()
-        batch_idx += 1
 
-        if batch_idx % 10 == 0:
-            print(f"Batch Loss: {loss.item()}")
+    avg_loss = epoch_loss / len(train_loader)
+    train_losses.append(avg_loss)
+    print(f"[Epoch {epoch+1}] Loss: {avg_loss:.4f}")
 
-    avg_loss = epoch_loss / batch_idx
-    losses.append(avg_loss)
-    print(f"[Epoch {epoch + 1}] Average Loss: {avg_loss:.4f}")
+    # Save best model
+    if avg_loss < best_loss:
+        best_loss = avg_loss
+        torch.save({
+            'epoch': epoch + 1,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optim.state_dict(),
+            'loss': avg_loss,
+        }, f"checkpoints/{config.model_name}/best_model.pth")
 
-    torch.save({
-        'epoch': epoch + 1,
-        'model_state_dict': model.state_dict(),
-        'optimizer_state_dict': optim.state_dict(),
-        'loss': avg_loss,
-    }, f"checkpoints/checkpoint_epoch{epoch + 1}.pth")
-
-    if epoch % 4 == 0:
+    # Evaluation every 5 epochs
+    if epoch % 5 == 0:
         model.eval()
+        metric = MeanAveragePrecision()
         with torch.no_grad():
-            test_loss = 0
-            for data, targets in tqdm(test_dataloader, desc='Test', leave=False):
+            for images, targets in test_loader:
                 images, targets = images.to(config.device), targets.to(config.device)
+                preds = model(images)
+                preds_list, targets_list = batch_to_mAP_list(preds, targets)
+                metric.update(preds=preds_list, target=targets_list)
 
-                out = model(images)
-                metric.update()
+        result = metric.compute()
+        mAP = result['map'].item()
+        map_scores.append(mAP)
+        print(f"[Epoch {epoch+1}] mAP: {mAP:.4f}")
 
-                # TODO: Calculate mAP
+    # Save metrics
+    torch.save({'losses': train_losses, 'mAP': map_scores}, f"metrics/{config.model_name}/train_metrics.pth")
 
-        # TODO: Save metric
 
-
-torch.save({
-    'model_state_dict': model.state_dict(),
-}, "checkpoints/model.pth")
-
-# Plot loss vs epoch
-plt.plot(range(1, len(losses) + 1), losses)
+# Plot loss and mAP
+plt.figure()
+plt.plot(train_losses, label='Loss')
+plt.plot(range(0, config.EPOCHS, 5), map_scores, label='mAP')
 plt.xlabel("Epoch")
-plt.ylabel("Training Loss")
-plt.title("Loss vs Epoch")
+plt.ylabel("Metric")
+plt.title("Training Loss and mAP")
+plt.legend()
 plt.grid(True)
-plt.savefig("images/loss_vs_epoch.png")
+plt.savefig(f"images/{config.model_name}/metrics.png")
+plt.close()

@@ -4,7 +4,7 @@ import torch
 EPOCHS = 95
 DATA_PATH = "data"
 BATCH_SIZE = 64
-LEARNING_RATE = 1e-4
+LEARNING_RATE = 1e-3
 
 device = torch.device("cpu")
 if torch.cuda.is_available():

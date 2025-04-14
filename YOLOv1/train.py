@@ -37,14 +37,37 @@ model = models[config.model_name]().to(config.device)
 optim = torch.optim.AdamW(model.parameters(), lr=config.LEARNING_RATE)
 loss_fn = YOLOLoss()
 
-# Tracking
+
+# Load checkpoint if exists
+start_epoch = 0
+best_loss = float('inf')
+
+checkpoint_path = f"checkpoints/{config.model_name}/best_model.pth"
+if os.path.exists(checkpoint_path):
+    checkpoint = torch.load(checkpoint_path, map_location=config.device)
+    model.load_state_dict(checkpoint['model_state_dict'])
+    optim.load_state_dict(checkpoint['optimizer_state_dict'])
+    best_loss = checkpoint['loss']
+    start_epoch = checkpoint['epoch']
+    print(f"Resumed from checkpoint at epoch {start_epoch} with loss {best_loss:.4f}")
+
+# Load saved metrics if exists
 train_losses = []
 map_scores = []
 train_times = []
 best_loss = float('inf')
 
+metrics_path = f"metrics/{config.model_name}/train_metrics.pth"
+if os.path.exists(metrics_path):
+    metrics = torch.load(metrics_path)
+    train_losses = metrics['losses']
+    map_scores = metrics['mAP']
+    train_times = metrics['train_times']
+    print(f"Loading saved metrics")
+
+
 # Training Loop
-for epoch in range(config.EPOCHS):
+for epoch in range(start_epoch, config.EPOCHS):
     model.train()
     epoch_loss = 0
     start_time = time.time()

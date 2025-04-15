@@ -114,3 +114,63 @@ class YOLOv1ViT(nn.Module):
  
     def forward(self, X):
         pass
+
+
+class YOLOv1Small(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        layers = []
+
+        # Conv 1
+        layers += [
+            nn.Conv2d(3, 16, 3, stride=1, padding=1),
+            nn.BatchNorm2d(16),
+            nn.LeakyReLU(0.1),
+            nn.MaxPool2d(2, 2)
+        ]
+
+        # Conv 2
+        layers += [
+            nn.Conv2d(16, 32, 3, stride=1, padding=1),
+            nn.BatchNorm2d(32),
+            nn.LeakyReLU(0.1),
+            nn.MaxPool2d(2, 2)
+        ]
+
+        # Conv 3
+        layers += [
+            nn.Conv2d(32, 64, 3, stride=1, padding=1),
+            nn.BatchNorm2d(64),
+            nn.LeakyReLU(0.1),
+            nn.MaxPool2d(2, 2)
+        ]
+
+        # Conv 4
+        layers += [
+            nn.Conv2d(64, 128, 3, stride=1, padding=1),
+            nn.BatchNorm2d(128),
+            nn.LeakyReLU(0.1),
+            nn.MaxPool2d(2, 2)
+        ]
+
+        self.model = nn.Sequential(*layers)
+
+        self.depth = config.B * (5 + config.C)
+        self.out = nn.Sequential(
+            nn.Flatten(),
+            nn.LazyLinear(1024),
+            nn.Dropout(0.5),
+            nn.LeakyReLU(0.1),
+            nn.Linear(1024, config.S * config.S * self.depth)
+        )
+
+    def forward(self, x):
+        x = self.model(x)
+        x = self.out(x)
+
+        x = x.view(-1, config.S, config.S, config.B, 5 + config.C)
+        x[..., 0:2] = torch.sigmoid(x[..., 0:2])
+        x[..., 4] = torch.sigmoid(x[..., 4])
+        x = x.view(-1, config.S, config.S, self.depth)
+        return x

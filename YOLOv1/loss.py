@@ -24,10 +24,10 @@ class YOLOLoss(nn.Module):
         loss = torch.tensor(0.0, device=preds.device)
 
         # Compute IoUs between all predicted boxes and all GT boxes in each cell
-        ious = batch_iou(preds, targets)  # (N, S, S, B_pred, B_gt)
+        ious = batch_iou(preds, targets)  # (N, S, S, B, B)
 
         # Get best predicted box for each target box
-        best_pred = torch.argmax(ious, dim=3)  # (N, S, S, B_gt)
+        best_pred = torch.argmax(ious, dim=3)  # (N, S, S, B)
 
         # Build a responsible mask: (N, S, S, B)
         responsible_mask = torch.zeros_like(preds[..., 0])  # (N, S, S, B)

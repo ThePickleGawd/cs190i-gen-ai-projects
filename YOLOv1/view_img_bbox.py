@@ -9,12 +9,12 @@ import config
 
 # Load model
 model = YOLOv1().to(config.device)
-state_dict = torch.load("checkpoints/model.pth", map_location=config.device)
-model.load_state_dict(state_dict)
+state_dict = torch.load("checkpoints/YOLOv1/best_model.pth", map_location=config.device)
+model.load_state_dict(state_dict["model_state_dict"])
 model.eval()
 
 # Load dataset
-dataset = VOCDataset("val")
+dataset = VOCDataset("train")
 
 fig, ax = plt.subplots()
 

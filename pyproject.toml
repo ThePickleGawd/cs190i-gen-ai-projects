@@ -6,9 +6,9 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "datasets>=3.5.0",
+    "faster-coco-eval>=1.6.5",
     "matplotlib>=3.10.1",
     "numpy>=2.2.4",
-    "pycocotools>=2.0.8",
     "tensorboard>=2.19.0",
     "torch>=2.6.0",
     "torchmetrics>=1.7.1",

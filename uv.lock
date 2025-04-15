@@ -194,9 +194,9 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "datasets" },
+    { name = "faster-coco-eval" },
     { name = "matplotlib" },
     { name = "numpy" },
-    { name = "pycocotools" },
     { name = "tensorboard" },
     { name = "torch", version = "2.6.0", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform != 'linux' and sys_platform != 'win32'" },
     { name = "torch", version = "2.6.0+cu124", source = { registry = "https://download.pytorch.org/whl/cu124" }, marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
@@ -208,9 +208,9 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "datasets", specifier = ">=3.5.0" },
+    { name = "faster-coco-eval", specifier = ">=1.6.5" },
     { name = "matplotlib", specifier = ">=3.10.1" },
     { name = "numpy", specifier = ">=2.2.4" },
-    { name = "pycocotools", specifier = ">=2.0.8" },
     { name = "tensorboard", specifier = ">=2.19.0" },
     { name = "torch", marker = "sys_platform != 'linux' and sys_platform != 'win32'", specifier = ">=2.6.0", index = "https://download.pytorch.org/whl/cpu" },
     { name = "torch", marker = "sys_platform == 'linux' or sys_platform == 'win32'", specifier = ">=2.6.0", index = "https://download.pytorch.org/whl/cu124" },
@@ -260,6 +260,32 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/17/4d/ac7ffa80c69ea1df30a8aa11b3578692a5118e7cd1aa157e3ef73b092d15/dill-0.3.8.tar.gz", hash = "sha256:3ebe3c479ad625c4553aca177444d89b486b1d84982eeacded644afc0cf797ca", size = 184847 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c9/7a/cef76fd8438a42f96db64ddaa85280485a9c395e7df3db8158cfec1eee34/dill-0.3.8-py3-none-any.whl", hash = "sha256:c36ca9ffb54365bdd2f8eb3eff7d2a21237f8452b57ace88b1ac615b7e815bd7", size = 116252 },
+]
+
+[[package]]
+name = "faster-coco-eval"
+version = "1.6.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "pandas" },
+    { name = "pillow" },
+    { name = "plotly" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d8/aa/2d1ec7f1dff56f7306ead37292506d194558227c137054875e4c83eec000/faster_coco_eval-1.6.5.tar.gz", hash = "sha256:51c20207ebbd7a9fbf16113ffe39749355e0888c5ed274f2771da71ee347cb8f", size = 65649 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e9/b1/76e4dd145b4dc2a4d64f1429623cbf2fc467c7cb58a7b6bda52b26bf880a/faster_coco_eval-1.6.5-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:fdfb56d626b7f4de242cf12d7999b26e0fecd4fbb82e335aba66fd54563091e4", size = 367560 },
+    { url = "https://files.pythonhosted.org/packages/db/ad/de7775b107c1122664a6060d62c90e39174d96846698ed8d0acfc80cb0b5/faster_coco_eval-1.6.5-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:241227e3578b8a4b1d1daf42dad54d8c22620d6eb7d9183645a4db5fb4830103", size = 342536 },
+    { url = "https://files.pythonhosted.org/packages/7f/da/ab9924c498c2a0e636613eca369347d6e132794485917e382ff68172b984/faster_coco_eval-1.6.5-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:9664c84e1f98d7283a879d9b278ce9a61cadbcb23671bb1a950275edb3688620", size = 452539 },
+    { url = "https://files.pythonhosted.org/packages/d8/14/6ba5eca2726e30ca3473813e57aa0493cf707a1c83fbfd06cd31e7651340/faster_coco_eval-1.6.5-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b6fca63ac1b440d5deeba448fd79abea1b75eb8c10ea09784ab9d0d11cf0dc3e", size = 472923 },
+    { url = "https://files.pythonhosted.org/packages/bd/75/21869646532f5573c0bcaddcff2a31bb2cb85b5d98163e024521abf6cdbb/faster_coco_eval-1.6.5-cp312-cp312-win_amd64.whl", hash = "sha256:ea816119febb88b994ad4facfb65b2e1717ea776ec8f59ac1ae165dd4f77051f", size = 302958 },
+    { url = "https://files.pythonhosted.org/packages/fd/d7/1f92d301f98641db937d9b7ebde043a2bcbe6fe2479cec0a966a2757b19f/faster_coco_eval-1.6.5-cp312-cp312-win_arm64.whl", hash = "sha256:3fa4adae45e6beb3a2cdb5f03e0131745654173729e20fe02610d07d24bdb463", size = 281726 },
+    { url = "https://files.pythonhosted.org/packages/c2/9b/8948d6cef6420feb7a26a04cb7241d193fd516d698b7483a7e7aacca6c68/faster_coco_eval-1.6.5-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:96f68814d85749a308286944b5243d8ac79aeec28e5b0d9ef7d09ce1698e9fac", size = 367651 },
+    { url = "https://files.pythonhosted.org/packages/2e/7f/b82fe7a23bb669895ee7700fc1ffe6809c36d56cff9d1df4943ce5432c82/faster_coco_eval-1.6.5-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:66f067423b022549bd686443a4c0b2078817a4592ce48a647ec5f18ebc465a96", size = 342711 },
+    { url = "https://files.pythonhosted.org/packages/69/99/b6c56fc2dc7d6d77da82e9703c368c116f7492ecce1e82810ecc17a230fd/faster_coco_eval-1.6.5-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a93c6caca3f1b0d0d868f2cf1f2f5924b8671206b91a58e3a7576f151fcbcc20", size = 452854 },
+    { url = "https://files.pythonhosted.org/packages/2e/fa/10d00e5f58d4c97b35328ccd9595d7d77a4eb3ea37201a3ef954ed11b2c6/faster_coco_eval-1.6.5-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f4438eb389ca4173a8bc3eca82b3d6b5ffdd293d1a1b2da188dc7a3d9d7c1328", size = 472765 },
+    { url = "https://files.pythonhosted.org/packages/af/cf/9c09d5cf1abd680707db6b26367c370f6bfe16dca598d3b3dae4e79af206/faster_coco_eval-1.6.5-cp313-cp313-win_amd64.whl", hash = "sha256:9924aa51d7c7edc248522fd062185410de998b42f1b5af5259dde805dbab6eb0", size = 302993 },
+    { url = "https://files.pythonhosted.org/packages/3f/28/30c774e22637b7f2ecdb607fa27c994e57320c92634792082cbe079777fb/faster_coco_eval-1.6.5-cp313-cp313-win_arm64.whl", hash = "sha256:17e61198e333ddecaff27af1b4fe73e5340162118a3cba036ed4e77eb1e95583", size = 281583 },
 ]
 
 [[package]]
@@ -645,6 +671,15 @@ wheels = [
 ]
 
 [[package]]
+name = "narwhals"
+version = "1.35.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ee/6a/a98fa5e9d530a428a0cd79d27f059ed65efd3a07aad61a8c93e323c9c20b/narwhals-1.35.0.tar.gz", hash = "sha256:07477d18487fbc940243b69818a177ed7119b737910a8a254fb67688b48a7c96", size = 265784 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/80/b3/5781eb874f04cb1e882a7d93cf30abcb00362a3205c5f3708a7434a1a2ac/narwhals-1.35.0-py3-none-any.whl", hash = "sha256:7562af132fa3f8aaaf34dc96d7ec95bdca29d1c795e8fcf14e01edf1d32122bc", size = 325708 },
+]
+
+[[package]]
 name = "networkx"
 version = "3.4.2"
 source = { registry = "https://pypi.org/simple" }
@@ -891,6 +926,19 @@ wheels = [
 ]
 
 [[package]]
+name = "plotly"
+version = "6.0.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "narwhals" },
+    { name = "packaging" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c7/cc/e41b5f697ae403f0b50e47b7af2e36642a193085f553bf7cc1169362873a/plotly-6.0.1.tar.gz", hash = "sha256:dd8400229872b6e3c964b099be699f8d00c489a974f2cfccfad5e8240873366b", size = 8094643 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/02/65/ad2bc85f7377f5cfba5d4466d5474423a3fb7f6a97fd807c06f92dd3e721/plotly-6.0.1-py3-none-any.whl", hash = "sha256:4714db20fea57a435692c548a4eb4fae454f7daddf15f8d8ba7e1045681d7768", size = 14805757 },
+]
+
+[[package]]
 name = "propcache"
 version = "0.3.1"
 source = { registry = "https://pypi.org/simple" }
@@ -987,25 +1035,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/3a/d4/b4a3aa781a2c715520aa8ab4fe2e7fa49d33a1d4e71c8fc6ab7b5de7a3f8/pyarrow-19.0.1-cp313-cp313t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5a9137cf7e1640dce4c190551ee69d478f7121b5c6f323553b319cac936395f6", size = 42171896 },
     { url = "https://files.pythonhosted.org/packages/23/1b/716d4cd5a3cbc387c6e6745d2704c4b46654ba2668260d25c402626c5ddb/pyarrow-19.0.1-cp313-cp313t-manylinux_2_28_aarch64.whl", hash = "sha256:7c1bca1897c28013db5e4c83944a2ab53231f541b9e0c3f4791206d0c0de389a", size = 40464851 },
     { url = "https://files.pythonhosted.org/packages/ed/bd/54907846383dcc7ee28772d7e646f6c34276a17da740002a5cefe90f04f7/pyarrow-19.0.1-cp313-cp313t-manylinux_2_28_x86_64.whl", hash = "sha256:58d9397b2e273ef76264b45531e9d552d8ec8a6688b7390b5be44c02a37aade8", size = 42085744 },
-]
-
-[[package]]
-name = "pycocotools"
-version = "2.0.8"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "matplotlib" },
-    { name = "numpy" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/6b/1a/cdfce175d663568215b3a6b6170ad2a526932cc1021dffabda56a5c3f189/pycocotools-2.0.8.tar.gz", hash = "sha256:8f2bcedb786ba26c367a3680f9c4eb5b2ad9dccb2b34eaeb205e0a021e1dfb8d", size = 24993 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/20/b6/d3287bdb2f1954d5739337035a424b6ec012bc6fed0af476c92309cec001/pycocotools-2.0.8-cp312-cp312-macosx_10_9_universal2.whl", hash = "sha256:dd4616621d062882db677de5c64b1b0f6efbcaed9fd284b61e7ba4b16ab24d7a", size = 162686 },
-    { url = "https://files.pythonhosted.org/packages/ce/1d/3f32a8fd8b0d0c6f952f030ac90fceb318204c19de33b1cbc4cccee51a03/pycocotools-2.0.8-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5683ba2612c39094a2e8453d40349768a3da6673376786651481d6f553ff7b50", size = 429594 },
-    { url = "https://files.pythonhosted.org/packages/3c/ce/e51566bce4067327c299fe8b6de18f9275e0c0ceaf8e4820ea9af689101c/pycocotools-2.0.8-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b89f399eb851d18f68dfa7f126380394ec0820915c7b3831dd37563bc58daa95", size = 443497 },
-    { url = "https://files.pythonhosted.org/packages/87/f2/038244a12c3297a2a7821bd6e72deaa350831c142b0380a14c9749009d83/pycocotools-2.0.8-cp312-cp312-musllinux_1_1_aarch64.whl", hash = "sha256:e6d528c4f35580347ee3cd57f92cf0926e9b6a688d0904b2ea8a814ae2e57a47", size = 428855 },
-    { url = "https://files.pythonhosted.org/packages/74/fd/88025b72eaff58fe4066823ebecb3232c3b59f2a080cb3d4c974e1082732/pycocotools-2.0.8-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:56bbe8be608def61da0b4430562b8d5ff14525f509631a667cfd8405325193da", size = 444322 },
-    { url = "https://files.pythonhosted.org/packages/4a/9b/8f89d36e4a23166ccabe5c9fed00baffaa6a67609add316fc1334bbf4016/pycocotools-2.0.8-cp312-cp312-win_amd64.whl", hash = "sha256:d004033e760a172b2ccbdf4a62d20d2bcf0c9b40dc3c0d1d724045b0a6944862", size = 83255 },
-    { url = "https://files.pythonhosted.org/packages/4d/82/73ba66a13b2288ecc60ed910dd8c16e6c584f3ca5407e706e5903d256712/pycocotools-2.0.8-cp312-cp312-win_arm64.whl", hash = "sha256:87853ca11e9b130e461d6b5284ea475efe35429060a915844e1998d206ba028e", size = 68922 },
 ]
 
 [[package]]

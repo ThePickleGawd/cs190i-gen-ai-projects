@@ -24,7 +24,7 @@ class VOCDataset(Dataset):
             v2.ToDtype(torch.float32, scale=True),
         ])
 
-        self.dataset = VOCDetection(root=config.DATA_PATH, download=False, year="2012", image_set=image_set, transform=None)
+        self.dataset = VOCDetection(root=config.DATA_PATH, download=True, year="2012", image_set=image_set, transform=None)
         self.classes = {cls: idx for idx, cls in enumerate(config.VOC_CLASSES)}
 
     def __len__(self):

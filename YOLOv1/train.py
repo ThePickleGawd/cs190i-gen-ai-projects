@@ -122,8 +122,8 @@ for epoch in range(start_epoch, config.EPOCHS):
             'loss': avg_loss,
         }, f"checkpoints/{config.model_name}/best_model.pth")
 
-    # Evaluate every 5 epochs
-    if epoch % 5 == 0:
+    # Evaluate every 10 epochs
+    if epoch % 10 == 0:
         model.eval()
         metric = MeanAveragePrecision()
         with torch.no_grad():

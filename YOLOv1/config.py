@@ -3,7 +3,7 @@ import torch
 # Train settings
 EPOCHS = 125
 DATA_PATH = "data"
-BATCH_SIZE = 64
+BATCH_SIZE = 256
 LEARNING_RATE = 1e-3
 
 device = torch.device("cpu")

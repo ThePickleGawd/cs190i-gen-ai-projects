@@ -1,7 +1,7 @@
 import torch
 
 # Train settings
-EPOCHS = 125
+EPOCHS = 150
 DATA_PATH = "data"
 BATCH_SIZE = 64
 LEARNING_RATE = 1e-4

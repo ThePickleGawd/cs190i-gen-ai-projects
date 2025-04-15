@@ -1,5 +1,7 @@
 import torch
 from collections import Counter
+import os
+import matplotlib.pyplot as plt
 import config
 
 def xywh_to_xyxy(box):
@@ -129,3 +131,37 @@ def batch_to_mAP_list(preds: torch.Tensor, targets: torch.Tensor):
         })
 
     return preds_list, targets_list
+
+
+
+def plot_training_metrics(train_losses, map_scores, train_times, start_epoch, model_name, save_dir="images"):
+    os.makedirs(f"{save_dir}/{model_name}", exist_ok=True)
+
+    fig, ax1 = plt.subplots()
+
+    # Loss and mAP on left axis
+    ax1.plot(train_losses, label='Loss', color='tab:blue')
+    if map_scores:
+        map_epochs = list(range(10 + (start_epoch // 10) * 10, start_epoch + len(map_scores) * 10 + 1, 10))
+        ax1.plot(map_epochs, map_scores, label='mAP', color='tab:green')
+    ax1.set_xlabel("Epoch")
+    ax1.set_ylabel("Loss / mAP", color='tab:blue')
+    ax1.set_ylim(0, max(max(train_losses, default=0), max(map_scores, default=0)) * 1.1)
+    ax1.tick_params(axis='y', labelcolor='tab:blue')
+    ax1.grid(True)
+
+    # Training time on right axis
+    ax2 = ax1.twinx()
+    ax2.plot(train_times, label='Train Time (s)', color='tab:red')
+    ax2.set_ylabel("Time (s)", color='tab:red')
+    ax2.set_ylim(0, max(train_times) * 1.1)
+    ax2.tick_params(axis='y', labelcolor='tab:red')
+
+    # Combine legends
+    lines1, labels1 = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper right')
+
+    plt.title("Training Loss, mAP, and Time per Epoch")
+    plt.savefig(f"{save_dir}/{model_name}/metrics.png")
+    plt.close()

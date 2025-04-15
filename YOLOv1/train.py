@@ -12,7 +12,7 @@ from data import VOCDataset
 from model import YOLOv1, YOLOv1ViT
 from loss import YOLOLoss
 import config
-from utils import batch_to_mAP_list
+from utils import batch_to_mAP_list, plot_training_metrics
 
 # Create necessary directories
 os.makedirs(f"checkpoints/{config.model_name}", exist_ok=True)
@@ -61,7 +61,7 @@ scheduler = LambdaLR(optim, lr_lambda=lr_schedule)
 start_epoch = 0
 best_loss = float('inf')
 
-checkpoint_path = f"checkpoints/{config.model_name}/checkpoint_epoch81.pth"
+checkpoint_path = f"checkpoints/{config.model_name}/best_model.pth"
 if os.path.exists(checkpoint_path):
     checkpoint = torch.load(checkpoint_path, map_location=config.device)
     model.load_state_dict(checkpoint['model_state_dict'])
@@ -91,6 +91,7 @@ for epoch in range(start_epoch, config.EPOCHS):
     epoch_loss = 0
     start_time = time.time()
 
+    batch_idx = 0
     for images, targets in train_loader:
         images, targets = images.to(config.device), targets.to(config.device)
         out = model(images)
@@ -101,6 +102,10 @@ for epoch in range(start_epoch, config.EPOCHS):
         optim.step()
 
         epoch_loss += loss.item()
+        if batch_idx % 100 == 0:
+            print(loss.item())
+
+        batch_idx += 1
 
     scheduler.step()
 
@@ -145,25 +150,5 @@ for epoch in range(start_epoch, config.EPOCHS):
         'train_times': train_times
     }, f"metrics/{config.model_name}/train_metrics.pth")
 
+    plot_training_metrics(train_losses, map_scores, train_times, start_epoch, config.model_name)
 
-# Plot Loss and mAP
-plt.figure()
-plt.plot(train_losses, label='Loss')
-plt.plot(range(0, config.EPOCHS, 5), map_scores, label='mAP')
-plt.xlabel("Epoch")
-plt.ylabel("Metric")
-plt.title("Training Loss and mAP")
-plt.legend()
-plt.grid(True)
-plt.savefig(f"images/{config.model_name}/metrics.png")
-plt.close()
-
-# Plot training time
-plt.figure()
-plt.plot(train_times, label='Train Time (s)')
-plt.xlabel("Epoch")
-plt.ylabel("Time (s)")
-plt.title("Training Time per Epoch")
-plt.grid(True)
-plt.savefig(f"images/{config.model_name}/train_times.png")
-plt.close()

@@ -5,6 +5,8 @@ import os
 import time
 from tqdm import tqdm
 from torch.utils.data import DataLoader
+from torch.optim.lr_scheduler import LambdaLR
+import math
 
 from data import VOCDataset
 from model import YOLOv1, YOLOv1ViT
@@ -37,6 +39,23 @@ model = models[config.model_name]().to(config.device)
 optim = torch.optim.AdamW(model.parameters(), lr=config.LEARNING_RATE)
 loss_fn = YOLOLoss()
 
+
+# LR Scheduler
+
+def lr_schedule(epoch):
+    if epoch < 15:
+        # Anneal from 1e-4 to 1e-4 (flat)
+        return 1.0
+    elif epoch < 90:
+        # Anneal from 1e-4 to 1e-3 over 75 epochs (cosine ramp up)
+        t = (epoch - 15) / (75)
+        return 10.0 * 0.5 * (1 - math.cos(math.pi * t))
+    else:
+        # Anneal from 1e-3 back to 1e-4 over 25 epochs (cosine decay)
+        t = (epoch - 90) / (25)
+        return 1.0 * 0.5 * (1 + math.cos(math.pi * t))
+
+scheduler = LambdaLR(optim, lr_lambda=lr_schedule)
 
 # Load checkpoint if exists
 start_epoch = 0
@@ -82,6 +101,8 @@ for epoch in range(start_epoch, config.EPOCHS):
         optim.step()
 
         epoch_loss += loss.item()
+
+    scheduler.step()
 
     end_time = time.time()
     elapsed_time = end_time - start_time

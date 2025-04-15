@@ -13,6 +13,7 @@ class YOLOLoss(nn.Module):
         """
         preds, targets: (N, S, S, B*(5+C))
         """
+
         assert preds.shape == targets.shape
 
         N, S, *_ = preds.shape
@@ -23,55 +24,40 @@ class YOLOLoss(nn.Module):
 
         loss = torch.tensor(0.0, device=preds.device)
 
-        # Compute IoUs between all predicted boxes and all GT boxes in each cell
-        ious = batch_iou(preds, targets)  # (N, S, S, B, B)
+        # Each box has B iou targets
+        # Each box is responsible for one with best iou
+        # gnd_truth is targets but the box is at correct spot for the pred
+        ious = batch_iou(preds, targets) # (N, S, S, B, B)
+        responsible = torch.argmax(ious, dim=-1, keepdim=True) # (N, S, S, B, 1)
+        responsible = responsible.expand(-1, -1, -1, -1, targets.size(-1)) # (N, S, S, B, 5+C)
+        gnd_truth = torch.gather(targets, dim=3, index=responsible) # (N, S, S, B, 5+C)
 
-        # Get best predicted box for each target box
-        best_pred = torch.argmax(ious, dim=3)  # (N, S, S, B)
+        # From paper
+        lambda_coord, lambda_noobj = 5, 0.5
+        obj_ij = (gnd_truth[..., 4] > 0) # (N, S, S, B)
 
-        # Build a responsible mask: (N, S, S, B)
-        responsible_mask = torch.zeros_like(preds[..., 0])  # (N, S, S, B)
-        for b in range(B):
-            responsible_mask.scatter_(3, best_pred[..., b:b+1], 1)
+        ## Bounding Box Loss
+        
+        # x,y loss
+        loss += lambda_coord *  torch.sum(obj_ij.float() * (gnd_truth[..., 0] - preds[..., 0]) ** 2)
+        loss += lambda_coord * torch.sum(obj_ij.float() * (gnd_truth[..., 1] - preds[..., 1]) ** 2)
 
-        obj_ij = responsible_mask.bool()  # (N, S, S, B)
+        # w,h loss no sqrt
+        loss += lambda_coord * torch.sum(obj_ij.float() * (torch.sqrt(torch.exp(gnd_truth[..., 2])) - torch.sqrt(torch.exp(preds[..., 2]))) ** 2)
+        loss += lambda_coord * torch.sum(obj_ij.float() * (torch.sqrt(torch.exp(gnd_truth[..., 3])) - torch.sqrt(torch.exp(preds[..., 3]))) ** 2)
 
-        # Extract responsible predictions and targets
-        preds_resp = preds[obj_ij]  # (num_responsible, 5+C)
-        targets_resp = targets[obj_ij]  # (num_responsible, 5+C)
+        ## Confidence Loss
 
-        # Coefficients
-        lambda_coord = 5
-        lambda_noobj = 0.5
+        conf_preds = preds[..., 4]
+        conf_targets = gnd_truth[..., 4]
+        loss += torch.sum(obj_ij.float() * (conf_targets - conf_preds) ** 2)
+        loss += lambda_noobj * torch.sum((1 - obj_ij.float()) * (conf_targets - conf_preds) ** 2)
 
-        # Localization loss
-        loss += lambda_coord * F.mse_loss(preds_resp[:, 0], targets_resp[:, 0], reduction='sum')
-        loss += lambda_coord * F.mse_loss(preds_resp[:, 1], targets_resp[:, 1], reduction='sum')
+        ## Classification Loss
 
-        # w, h with sqrt
-        loss += lambda_coord * F.mse_loss(
-            torch.sqrt(torch.exp(preds_resp[:, 2]) + config.EPSILON),
-            torch.sqrt(torch.exp(targets_resp[:, 2])),
-            reduction='sum'
-        )
-        loss += lambda_coord * F.mse_loss(
-            torch.sqrt(torch.exp(preds_resp[:, 3]) + config.EPSILON),
-            torch.sqrt(torch.exp(targets_resp[:, 3])),
-            reduction='sum'
-        )
-
-        # Confidence loss
-        loss += F.mse_loss(preds_resp[:, 4], targets_resp[:, 4], reduction='sum')
-
-        # No-object loss (where obj_ij is false)
-        noobj_preds = preds[~obj_ij][..., 4]
-        noobj_targets = targets[~obj_ij][..., 4]
-        loss += lambda_noobj * F.mse_loss(noobj_preds, noobj_targets, reduction='sum')
-
-        # Classification loss
-        if preds_resp.shape[0] > 0:
-            class_preds = preds_resp[:, 5:]
-            class_targets = targets_resp[:, 5:].argmax(dim=1)
-            loss += F.cross_entropy(class_preds, class_targets, reduction='sum')
+        # Use cross entropy instead of squared error for classification
+        class_preds = preds[..., 5:][obj_ij]
+        class_targets = gnd_truth[..., 5:][obj_ij].argmax(-1)
+        loss += F.cross_entropy(class_preds.reshape(-1, C), class_targets.reshape(-1))
 
         return loss / N

@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torchvision.models import resnet50, ResNet50_Weights
 
 import config
 
@@ -116,61 +117,72 @@ class YOLOv1ViT(nn.Module):
         pass
 
 
-class YOLOv1Small(nn.Module):
+
+# YOLOv1 with ResNet backbone
+
+class YOLOv1ResNet(nn.Module):
     def __init__(self):
         super().__init__()
+        self.depth = config.B * 5 + config.C
 
-        layers = []
+        # Load backbone ResNet
+        backbone = resnet50(weights=ResNet50_Weights.DEFAULT)
+        backbone.requires_grad_(False)            # Freeze backbone weights
 
-        # Conv 1
-        layers += [
-            nn.Conv2d(3, 16, 3, stride=1, padding=1),
-            nn.BatchNorm2d(16),
-            nn.LeakyReLU(0.1),
-            nn.MaxPool2d(2, 2)
-        ]
+        # Delete last two layers and attach detection layers
+        backbone.avgpool = nn.Identity()
+        backbone.fc = nn.Identity()
 
-        # Conv 2
-        layers += [
-            nn.Conv2d(16, 32, 3, stride=1, padding=1),
-            nn.BatchNorm2d(32),
-            nn.LeakyReLU(0.1),
-            nn.MaxPool2d(2, 2)
-        ]
-
-        # Conv 3
-        layers += [
-            nn.Conv2d(32, 64, 3, stride=1, padding=1),
-            nn.BatchNorm2d(64),
-            nn.LeakyReLU(0.1),
-            nn.MaxPool2d(2, 2)
-        ]
-
-        # Conv 4
-        layers += [
-            nn.Conv2d(64, 128, 3, stride=1, padding=1),
-            nn.BatchNorm2d(128),
-            nn.LeakyReLU(0.1),
-            nn.MaxPool2d(2, 2)
-        ]
-
-        self.model = nn.Sequential(*layers)
-
-        self.depth = config.B * (5 + config.C)
-        self.out = nn.Sequential(
-            nn.Flatten(),
-            nn.LazyLinear(1024),
-            nn.Dropout(0.5),
-            nn.LeakyReLU(0.1),
-            nn.Linear(1024, config.S * config.S * self.depth)
+        self.model = nn.Sequential(
+            backbone,
+            Reshape(2048, 14, 14),
+            DetectionNet(2048)              # 4 conv, 2 linear
         )
 
     def forward(self, x):
-        x = self.model(x)
-        x = self.out(x)
+        return self.model.forward(x)
 
-        x = x.view(-1, config.S, config.S, config.B, 5 + config.C)
-        x[..., 0:2] = torch.sigmoid(x[..., 0:2])
-        x[..., 4] = torch.sigmoid(x[..., 4])
-        x = x.view(-1, config.S, config.S, self.depth)
-        return x
+
+class DetectionNet(nn.Module):
+    """The layers added on for detection as described in the paper."""
+
+    def __init__(self, in_channels):
+        super().__init__()
+
+        inner_channels = 1024
+        self.depth = 5 * config.B + config.C
+        self.model = nn.Sequential(
+            nn.Conv2d(in_channels, inner_channels, kernel_size=3, padding=1),
+            nn.LeakyReLU(negative_slope=0.1),
+
+            nn.Conv2d(inner_channels, inner_channels, kernel_size=3, stride=2, padding=1),   # (Ch, 14, 14) -> (Ch, 7, 7)
+            nn.LeakyReLU(negative_slope=0.1),
+
+            nn.Conv2d(inner_channels, inner_channels, kernel_size=3, padding=1),
+            nn.LeakyReLU(negative_slope=0.1),
+
+            nn.Conv2d(inner_channels, inner_channels, kernel_size=3, padding=1),
+            nn.LeakyReLU(negative_slope=0.1),
+
+            nn.Flatten(),
+
+            nn.Linear(7 * 7 * inner_channels, 4096),
+            # nn.Dropout(),
+            nn.LeakyReLU(negative_slope=0.1),
+
+            nn.Linear(4096, config.S * config.S * self.depth)
+        )
+
+    def forward(self, x):
+        return torch.reshape(
+            self.model.forward(x),
+            (-1, config.S, config.S, self.depth)
+        )
+    
+class Reshape(nn.Module):
+    def __init__(self, *args):
+        super().__init__()
+        self.shape = tuple(args)
+
+    def forward(self, x):
+        return torch.reshape(x, (-1, *self.shape))

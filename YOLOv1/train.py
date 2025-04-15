@@ -9,7 +9,7 @@ from torch.optim.lr_scheduler import LambdaLR
 import math
 
 from data import VOCDataset
-from model import YOLOv1, YOLOv1ViT, YOLOv1Small
+from model import YOLOv1, YOLOv1ViT, YOLOv1ResNet
 from loss import YOLOLoss
 import config
 from utils import batch_to_mAP_list, plot_training_metrics
@@ -34,12 +34,11 @@ test_loader = DataLoader(test_ds, batch_size=config.BATCH_SIZE, collate_fn=colla
 models = {
     "YOLOv1": YOLOv1,
     "YOLOv1Vit": YOLOv1ViT,
-    "YOLOv1Small": YOLOv1Small
+    "YOLOv1ResNet": YOLOv1ResNet
 }
 model = models[config.model_name]().to(config.device)
 optim = torch.optim.AdamW(model.parameters(), lr=config.LEARNING_RATE)
 loss_fn = YOLOLoss()
-
 
 # LR Scheduler
 

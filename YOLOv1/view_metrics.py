@@ -15,3 +15,4 @@ map_scores = metrics['mAP']
 train_times = metrics['train_times']
 start_epoch = 0  # or load from checkpoint if resuming
 plot_training_metrics(train_losses, map_scores, train_times, start_epoch, config.model_name)
+print(map_scores)

@@ -142,11 +142,11 @@ def plot_training_metrics(train_losses, map_scores, train_times, start_epoch, mo
     # Loss and mAP on left axis
     ax1.plot(train_losses, label='Loss', color='tab:blue')
     if map_scores:
-        map_epochs = list(range(10 + (start_epoch // 10) * 10, start_epoch + len(map_scores) * 10 + 1, 10))
-        ax1.plot(map_epochs, map_scores, label='mAP', color='tab:green')
+        map_epochs = list(range(start_epoch + 10, start_epoch + 10 + 10 * len(map_scores), 10))
+        ax1.plot(map_epochs, [s * 100 for s in map_scores], label='mAP (%)', color='tab:green')
     ax1.set_xlabel("Epoch")
     ax1.set_ylabel("Loss / mAP", color='tab:blue')
-    ax1.set_ylim(0, max(max(train_losses, default=0), max(map_scores, default=0)) * 1.1)
+    ax1.set_ylim(0, 100 * 1.1)
     ax1.tick_params(axis='y', labelcolor='tab:blue')
     ax1.grid(True)
 

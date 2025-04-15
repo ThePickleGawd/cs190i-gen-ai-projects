@@ -61,7 +61,7 @@ scheduler = LambdaLR(optim, lr_lambda=lr_schedule)
 start_epoch = 0
 best_loss = float('inf')
 
-checkpoint_path = f"checkpoints/{config.model_name}/best_model.pth"
+checkpoint_path = f"checkpoints/{config.model_name}/checkpoint_epoch81.pth"
 if os.path.exists(checkpoint_path):
     checkpoint = torch.load(checkpoint_path, map_location=config.device)
     model.load_state_dict(checkpoint['model_state_dict'])

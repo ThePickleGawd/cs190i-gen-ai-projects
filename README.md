@@ -6,7 +6,7 @@ Projects for Spring '25 CS 190I
 
 ```bash
 # Connect to GPU
-srun --gpus=1 --nodes=1 --time=5:00:00 --cpus-per-task=4 --pty bash
+srun --gpus=1 --nodes=1 --time=24:00:00 --cpus-per-task=4 --pty bash
 
 # See job queue
 squeue | grep dylanlu

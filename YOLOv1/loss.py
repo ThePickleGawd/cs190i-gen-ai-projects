@@ -50,12 +50,12 @@ class YOLOLoss(nn.Module):
 
         # w, h with sqrt
         loss += lambda_coord * F.mse_loss(
-            torch.sqrt(torch.exp(preds_resp[:, 2])),
+            torch.sqrt(torch.exp(preds_resp[:, 2]) + config.EPSILON),
             torch.sqrt(torch.exp(targets_resp[:, 2])),
             reduction='sum'
         )
         loss += lambda_coord * F.mse_loss(
-            torch.sqrt(torch.exp(preds_resp[:, 3])),
+            torch.sqrt(torch.exp(preds_resp[:, 3]) + config.EPSILON),
             torch.sqrt(torch.exp(targets_resp[:, 3])),
             reduction='sum'
         )

@@ -3,8 +3,8 @@ import torch
 # Train settings
 EPOCHS = 125
 DATA_PATH = "data"
-BATCH_SIZE = 256
-LEARNING_RATE = 1e-3
+BATCH_SIZE = 64
+LEARNING_RATE = 1e-4
 
 device = torch.device("cpu")
 if torch.cuda.is_available():

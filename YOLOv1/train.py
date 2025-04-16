@@ -130,7 +130,7 @@ for epoch in range(start_epoch, config.EPOCHS):
     # Evaluate every 10 epochs
     if epoch % 10 == 0:
         model.eval()
-        metric = MeanAveragePrecision()
+        metric = MeanAveragePrecision(backend="faster_coco_eval")
         with torch.no_grad():
             for images, targets in test_loader:
                 images, targets = images.to(config.device), targets.to(config.device)

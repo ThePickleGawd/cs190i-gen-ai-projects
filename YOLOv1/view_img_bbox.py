@@ -4,12 +4,12 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from torch.utils.data import DataLoader
 from data import VOCDataset
-from model import YOLOv1
+from model import YOLOv1ResNet
 import config
 
 # Load model
-model = YOLOv1().to(config.device)
-state_dict = torch.load("checkpoints/YOLOv1/best_model.pth", map_location=config.device)
+model = YOLOv1ResNet().to(config.device)
+state_dict = torch.load("checkpoints/YOLOv1ResNet/best_model.pth", map_location=config.device)
 model.load_state_dict(state_dict["model_state_dict"])
 model.eval()
 

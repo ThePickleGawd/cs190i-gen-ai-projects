@@ -150,7 +150,7 @@ class DetectionNet(nn.Module):
         super().__init__()
 
         inner_channels = 1024
-        self.depth = 5 * config.B + config.C
+        self.depth = config.B * (5 + config.C)
         self.model = nn.Sequential(
             nn.Conv2d(in_channels, inner_channels, kernel_size=3, padding=1),
             nn.LeakyReLU(negative_slope=0.1),
@@ -174,10 +174,8 @@ class DetectionNet(nn.Module):
         )
 
     def forward(self, x):
-        return torch.reshape(
-            self.model.forward(x),
-            (-1, config.S, config.S, self.depth)
-        )
+        x = self.model(x)
+        return x.view(-1, config.S, config.S, self.depth)
     
 class Reshape(nn.Module):
     def __init__(self, *args):

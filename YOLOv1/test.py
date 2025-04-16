@@ -3,7 +3,7 @@ from torch.utils.data import DataLoader
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
 from utils import batch_to_mAP_list
 
-from model import YOLOv1
+from model import YOLOv1, YOLOv1ResNet, YOLOv1ViT
 from data import VOCDataset
 import config
 from tqdm import tqdm
@@ -18,12 +18,17 @@ def collate_fn(batch):
 test_dataloader = DataLoader(test_ds, batch_size=config.BATCH_SIZE, collate_fn=collate_fn)
 
 ## Model and Metric
-model = YOLOv1().to(config.device)
-state_dict = torch.load("checkpoints/model.pth", map_location=config.device)
-model.load_state_dict(state_dict)
+models = {
+    "YOLOv1": YOLOv1,
+    "YOLOv1Vit": YOLOv1ViT,
+    "YOLOv1ResNet": YOLOv1ResNet
+}
+model = models[config.model_name]().to(config.device)
+checkpoint = torch.load(f"checkpoints/{config.model_name}/best_model.pth", map_location=config.device)
+model.load_state_dict(checkpoint["model_state_dict"])
 model.eval()
 
-metric = MeanAveragePrecision()
+metric = MeanAveragePrecision(backend="faster_coco_eval")
 
 with torch.no_grad():
     test_loss = 0

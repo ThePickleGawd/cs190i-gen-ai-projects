@@ -1,3 +1,4 @@
 data/*
 checkpoints/*
 metrics/*
+!view_metrics.py

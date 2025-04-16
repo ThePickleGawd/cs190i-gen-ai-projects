@@ -40,23 +40,6 @@ model = models[config.model_name]().to(config.device)
 optim = torch.optim.AdamW(model.parameters(), lr=config.LEARNING_RATE)
 loss_fn = YOLOLoss()
 
-# LR Scheduler
-
-def lr_schedule(epoch):
-    if epoch < 15:
-        # Anneal from 1e-4 to 1e-4 (flat)
-        return 1.0
-    elif epoch < 90:
-        # Anneal from 1e-4 to 1e-3 over 75 epochs (cosine ramp up)
-        t = (epoch - 15) / (75)
-        return 10.0 * 0.5 * (1 - math.cos(math.pi * t))
-    else:
-        # Anneal from 1e-3 back to 1e-4 over 25 epochs (cosine decay)
-        t = (epoch - 90) / (25)
-        return 1.0 * 0.5 * (1 + math.cos(math.pi * t))
-
-scheduler = LambdaLR(optim, lr_lambda=lr_schedule)
-
 # Load checkpoint if exists
 start_epoch = 0
 best_loss = float('inf')
@@ -70,11 +53,11 @@ if os.path.exists(checkpoint_path):
     start_epoch = checkpoint['epoch']
     print(f"Resumed from checkpoint at epoch {start_epoch} with loss {best_loss:.4f}")
 
+
 # Load saved metrics if exists
 train_losses = []
 map_scores = []
 train_times = []
-best_loss = float('inf')
 
 metrics_path = f"metrics/{config.model_name}/train_metrics.pth"
 if os.path.exists(metrics_path):
@@ -84,6 +67,25 @@ if os.path.exists(metrics_path):
     train_times = metrics['train_times']
     print(f"Loading saved metrics")
 
+# LR Scheduler
+
+def lr_schedule(epoch):
+    if epoch < 15:
+        # Anneal from 1e-4 to 1e-4 (flat)
+        return 1.0
+    elif epoch < 45:
+        # Anneal from 1e-4 to 1e-3 over 30 epochs (cosine ramp up)
+        t = (epoch - 15) / (30)
+        return 10.0 * 0.5 * (1 - math.cos(math.pi * t))
+    else:
+        return 1.0
+        # # Anneal from 1e-3 back to 1e-4 over 25 epochs (cosine decay)
+        # t = (epoch - 45) / (25)
+        # return 1.0 * 0.5 * (1 + math.cos(math.pi * t))
+
+scheduler = LambdaLR(optim, lr_lambda=lr_schedule, last_epoch=start_epoch)
+
+first_few = 10
 
 # Training Loop
 for epoch in range(start_epoch, config.EPOCHS):
@@ -100,6 +102,10 @@ for epoch in range(start_epoch, config.EPOCHS):
         optim.zero_grad()
         loss.backward()
         optim.step()
+
+        if first_few > 0:
+            first_few -= 1
+            print(loss.item())
 
         epoch_loss += loss.item()
         if batch_idx % 100 == 0:

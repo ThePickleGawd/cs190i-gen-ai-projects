@@ -11,7 +11,7 @@ if torch.cuda.is_available():
     device = torch.device("cuda")
 elif torch.backends.mps.is_available():
     device = torch.device("mps")
-model_name = "YOLOv1ResNet"
+model_name = "YOLOv1ResNet18"
 
 print(f"Using device: {device}. Model: {model_name}")
 

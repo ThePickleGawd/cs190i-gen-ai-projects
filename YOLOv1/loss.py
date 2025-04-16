@@ -61,3 +61,10 @@ class YOLOLoss(nn.Module):
         loss += F.cross_entropy(class_preds.reshape(-1, C), class_targets.reshape(-1))
 
         return loss / N
+    
+class ResNetLoss(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward():
+        pass

@@ -1,9 +1,11 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision.models import resnet50, ResNet50_Weights
+from torchvision.models import resnet50, ResNet50_Weights, resnet18
 
 import config
+
+# Original YOLOv1 from scratch
 
 class YOLOv1(nn.Module):
     def __init__(self):
@@ -117,7 +119,6 @@ class YOLOv1ViT(nn.Module):
         pass
 
 
-
 # YOLOv1 with ResNet backbone
 
 class YOLOv1ResNet(nn.Module):
@@ -141,7 +142,6 @@ class YOLOv1ResNet(nn.Module):
 
     def forward(self, x):
         return self.model.forward(x)
-
 
 class DetectionNet(nn.Module):
     """The layers added on for detection as described in the paper."""
@@ -178,9 +178,53 @@ class DetectionNet(nn.Module):
         return x.view(-1, config.S, config.S, self.depth)
     
 class Reshape(nn.Module):
+
+
+# YOLOv1 with ResNet18 backbone From Scratch
     def __init__(self, *args):
         super().__init__()
         self.shape = tuple(args)
 
     def forward(self, x):
         return torch.reshape(x, (-1, *self.shape))
+    
+class ResNet18Classifier(nn.Module):
+    def __init__(self, num_classes=20):  # VOC has 20 classes
+        super().__init__()
+        self.base = resnet18(weights=None)
+        in_features = self.base.fc.in_features
+        self.base.fc = nn.Linear(in_features, num_classes)
+
+    def forward(self, x):
+        return self.base(x)
+
+class ResNetBackbone(nn.Module):
+    def __init__(self):
+        super().__init__()
+        resnet = resnet18(weights=None)
+        self.features = nn.Sequential(
+            resnet.conv1, resnet.bn1, resnet.relu, resnet.maxpool,
+            resnet.layer1,
+            resnet.layer2,
+            resnet.layer3,
+            resnet.layer4
+        )
+
+    def forward(self, x):
+        return self.features(x)
+
+class YOLOv1ResNet18(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.backbone = ResNetBackbone()
+        self.head = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(512 * 14 * 14, 4096),  # fixed input dim from ResNet18
+            nn.LeakyReLU(0.1),
+            nn.Linear(4096, config.S * config.S * (config.B * (5 + config.C)))
+        )
+
+    def forward(self, x):
+        features = self.backbone(x)
+        out = self.head(features)
+        return out.view(-1, config.S, config.S, config.B * (5 + config.C))

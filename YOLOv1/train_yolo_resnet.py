@@ -1,18 +1,17 @@
 import torch
-from torchmetrics.detection.mean_ap import MeanAveragePrecision
-import matplotlib.pyplot as plt
 import os
-import time
-from tqdm import tqdm
+from model import ResNet18Classifier, YOLOv1ResNet18
+import config
+from utils import plot_training_metrics, batch_to_mAP_list
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import LambdaLR
 import math
-
+from torchmetrics.detection.mean_ap import MeanAveragePrecision
+import time
 from data import VOCDataset
-from model import YOLOv1, YOLOv1ViT, YOLOv1ResNet
 from loss import YOLOLoss
-import config
-from utils import batch_to_mAP_list, plot_training_metrics
+
+assert config.model_name == "YOLOv1ResNet18", "This script is for YOLOv1ResNet18 only"
 
 # Create necessary directories
 os.makedirs(f"checkpoints/{config.model_name}", exist_ok=True)
@@ -30,15 +29,23 @@ def collate_fn(batch):
 train_loader = DataLoader(train_ds, batch_size=config.BATCH_SIZE, collate_fn=collate_fn)
 test_loader = DataLoader(test_ds, batch_size=config.BATCH_SIZE, collate_fn=collate_fn)
 
-# Model, Optimizer, Loss
-models = {
-    "YOLOv1": YOLOv1,
-    "YOLOv1Vit": YOLOv1ViT,
-    "YOLOv1ResNet": YOLOv1ResNet
-}
-model = models[config.model_name]().to(config.device)
-optim = torch.optim.AdamW(model.parameters(), lr=config.LEARNING_RATE)
+# Load classifier weights
+classifier = ResNet18Classifier().to(config.device)
+resnet_checkpoint = "checkpoints/ResNet18Classifier/resnet18_voc.pth"
+if os.path.exists(resnet_checkpoint):
+    print(f"Loading ResNet weights from {resnet_checkpoint}")
+    classifier.load_state_dict(torch.load(resnet_checkpoint, map_location=config.device))
+else:
+    print("Using blank ResNet weights")
+
+# Transfer to YOLO backbone
+model = YOLOv1ResNet18().to(config.device)
+if os.path.exists(resnet_checkpoint):
+    print(f"Transferring ResNet weights to YOLOv1 backbone")
+    model.backbone.features.load_state_dict(classifier.base.state_dict(), strict=False)
+
 loss_fn = YOLOLoss()
+optim = torch.optim.AdamW(model.parameters(), lr=config.LEARNING_RATE)
 
 # Load checkpoint if exists
 start_epoch = 0
@@ -53,7 +60,6 @@ if os.path.exists(checkpoint_path):
     start_epoch = checkpoint['epoch']
     print(f"Resumed from checkpoint at epoch {start_epoch} with loss {best_loss:.4f}")
 
-
 # Load saved metrics if exists
 train_losses = []
 map_scores = []
@@ -62,16 +68,19 @@ train_times = []
 metrics_path = f"metrics/{config.model_name}/train_metrics.pth"
 if os.path.exists(metrics_path):
     metrics = torch.load(metrics_path)
-    train_losses = metrics['losses'][:start_epoch]
-    map_scores = metrics['mAP'][:start_epoch // config.EVAL_MAP_N]  # because mAP is saved every 10 epochs
-    train_times = metrics['train_times'][:start_epoch]
+    train_losses = metrics['losses']
+    map_scores = metrics['mAP']
+    train_times = metrics['train_times']
     print(f"Loading saved metrics")
 
 # LR Scheduler
 
 def lr_schedule(epoch):
-    if epoch < 15:
-        # Anneal from 1e-4 to 1e-4 (flat)
+    if epoch < 5:
+        # Warmup 1e-5
+        return 0.1
+    elif epoch < 15:
+        # Train at 1e-4
         return 1.0
     elif epoch < 45:
         # Anneal from 1e-4 to 1e-3 over 30 epochs (cosine ramp up)

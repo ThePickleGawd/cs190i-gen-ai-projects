@@ -14,7 +14,7 @@ model.load_state_dict(state_dict["model_state_dict"])
 model.eval()
 
 # Load dataset
-dataset = VOCDataset("train")
+dataset = VOCDataset("val")
 
 fig, ax = plt.subplots()
 

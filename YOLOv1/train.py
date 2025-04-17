@@ -1,160 +1,180 @@
-import torch
-from torchmetrics.detection.mean_ap import MeanAveragePrecision
-import matplotlib.pyplot as plt
+import argparse
 import os
 import time
-from tqdm import tqdm
-from torch.utils.data import DataLoader
-from torch.optim.lr_scheduler import LambdaLR
 import math
 
+import torch
+from torch.optim import SGD
+from torch.optim.lr_scheduler import LambdaLR
+from torch.utils.data import DataLoader
+from torchmetrics.detection.mean_ap import MeanAveragePrecision
+from tqdm import tqdm
+
 from data import VOCDataset
-from model import YOLOv1, YOLOv1ViT, YOLOv1ResNet
+from model import YOLOv1, YOLOv1ResNet, YOLOv1ViT
 from loss import YOLOLoss
-import config
 from utils import batch_to_mAP_list, plot_training_metrics
 
-# Create necessary directories
-os.makedirs(f"checkpoints/{config.model_name}", exist_ok=True)
-os.makedirs(f"images/{config.model_name}", exist_ok=True)
-os.makedirs(f"metrics/{config.model_name}", exist_ok=True)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Train YOLO variants on PASCAL VOC")
+    parser.add_argument("--model", required=True,
+                        choices=["YOLOv1", "YOLOv1ResNet", "YOLOv1ViT"],
+                        help="Which model to train")
+    parser.add_argument("--batch-size", type=int, default=16)
+    parser.add_argument("--lr", type=float, default=1e-3, help="Base learning rate")
+    parser.add_argument("--epochs", type=int, default=50)
+    parser.add_argument("--lambda-cls", type=float, default=1.0,
+                        help="Classification loss weight")
+    parser.add_argument("--eval-interval", type=int, default=10,
+                        help="Epochs between mAP evaluations")
+    parser.add_argument("--save-dir", type=str, default=".")
+    args = parser.parse_args()
 
-# Dataset and Dataloader
-train_ds = VOCDataset("train")
-test_ds = VOCDataset("val")
+    # Dirs
+    ckpt_dir = os.path.join(args.save_dir, 'checkpoints', args.model)
+    metrics_dir = os.path.join(args.save_dir, 'metrics', args.model)
+    images_dir = os.path.join(args.save_dir, 'images', args.model)
+    for d in (ckpt_dir, metrics_dir, images_dir):
+        os.makedirs(d, exist_ok=True)
 
-def collate_fn(batch):
-    imgs, targets = zip(*batch)
-    return torch.stack(imgs), torch.stack(targets)
+    # Device
+    device = torch.device(
+        "cuda" if torch.cuda.is_available() else
+        "mps"  if torch.backends.mps.is_available() else
+        "cpu"
+    )
+    print(f"Using device: {device}")
 
-train_loader = DataLoader(train_ds, batch_size=config.BATCH_SIZE, collate_fn=collate_fn)
-test_loader = DataLoader(test_ds, batch_size=config.BATCH_SIZE, collate_fn=collate_fn)
+    # Data
+    train_ds = VOCDataset('train')
+    val_ds   = VOCDataset('val')
+    def collate_fn(batch):
+        imgs, targets = zip(*batch)
+        return torch.stack(imgs), torch.stack(targets)
+    train_loader = DataLoader(train_ds, batch_size=args.batch_size,
+                              shuffle=True, collate_fn=collate_fn)
+    val_loader   = DataLoader(val_ds, batch_size=args.batch_size,
+                              shuffle=False, collate_fn=collate_fn)
 
-# Model, Optimizer, Loss
-models = {
-    "YOLOv1": YOLOv1,
-    "YOLOv1Vit": YOLOv1ViT,
-    "YOLOv1ResNet": YOLOv1ResNet
-}
-model = models[config.model_name]().to(config.device)
-optim = torch.optim.AdamW(model.parameters(), lr=config.LEARNING_RATE)
-loss_fn = YOLOLoss()
+    # Model
+    model_map = {
+        'YOLOv1': YOLOv1,
+        'YOLOv1ResNet': YOLOv1ResNet,
+        'YOLOv1ViT': YOLOv1ViT
+    }
+    model = model_map[args.model]().to(device)
 
-# Load checkpoint if exists
-start_epoch = 0
-best_loss = float('inf')
+    # Freeze/unfreeze for ResNet variant
+    if args.model == 'YOLOv1ResNet':
+        backbone = model.model[0]
+        backbone.requires_grad_(False)
+        for layer in (backbone.layer3, backbone.layer4):
+            for p in layer.parameters():
+                p.requires_grad = True
 
-checkpoint_path = f"checkpoints/{config.model_name}/best_model.pth"
-if os.path.exists(checkpoint_path):
-    checkpoint = torch.load(checkpoint_path, map_location=config.device)
-    model.load_state_dict(checkpoint['model_state_dict'])
-    optim.load_state_dict(checkpoint['optimizer_state_dict'])
-    best_loss = checkpoint['loss']
-    start_epoch = checkpoint['epoch']
-    print(f"Resumed from checkpoint at epoch {start_epoch} with loss {best_loss:.4f}")
-
-
-# Load saved metrics if exists
-train_losses = []
-map_scores = []
-train_times = []
-
-metrics_path = f"metrics/{config.model_name}/train_metrics.pth"
-if os.path.exists(metrics_path):
-    metrics = torch.load(metrics_path)
-    train_losses = metrics['losses'][:start_epoch]
-    map_scores = metrics['mAP'][:start_epoch // config.EVAL_MAP_N]  # because mAP is saved every 10 epochs
-    train_times = metrics['train_times'][:start_epoch]
-    print(f"Loading saved metrics")
-
-# LR Scheduler
-
-def lr_schedule(epoch):
-    if epoch < 15:
-        # Anneal from 1e-4 to 1e-4 (flat)
-        return 1.0
-    elif epoch < 45:
-        # Anneal from 1e-4 to 1e-3 over 30 epochs (cosine ramp up)
-        t = (epoch - 15) / (30)
-        return 10.0 * 0.5 * (1 - math.cos(math.pi * t))
+    # Optimizer
+    if args.model == 'YOLOv1ResNet':
+        detector = model.model[2]
+        optimizer = SGD([
+            {'params': backbone.layer3.parameters(), 'lr': args.lr * 0.1},
+            {'params': backbone.layer4.parameters(), 'lr': args.lr * 0.1},
+            {'params': detector.parameters(),         'lr': args.lr},
+        ], momentum=0.9, weight_decay=5e-4)
     else:
-        return 1.0
-        # # Anneal from 1e-3 back to 1e-4 over 25 epochs (cosine decay)
-        # t = (epoch - 45) / (25)
-        # return 1.0 * 0.5 * (1 + math.cos(math.pi * t))
+        optimizer = SGD(model.parameters(), lr=args.lr,
+                        momentum=0.9, weight_decay=5e-4)
 
-scheduler = LambdaLR(optim, lr_lambda=lr_schedule, last_epoch=start_epoch if start_epoch > 0 else -1)
+    # Loss & Scheduler
+    loss_fn = YOLOLoss(lambda_class=args.lambda_cls)
+    def lr_schedule(epoch):
+        if epoch < 15:
+            return 1.0
+        elif epoch < 45:
+            t = (epoch - 15) / 30
+            return 10.0 * 0.5 * (1 - math.cos(math.pi * t))
+        else:
+            return 1.0
+    scheduler = LambdaLR(optimizer, lr_lambda=lr_schedule)
 
-first_few = 10
+    # Checkpoint resume
+    start_epoch = 0
+    best_loss = float('inf')
+    ckpt_path = os.path.join(ckpt_dir, 'best_model.pth')
+    last_path = os.path.join(ckpt_dir, 'last_model.pth')
+    if os.path.exists(ckpt_path):
+        cp = torch.load(ckpt_path, map_location=device)
+        model.load_state_dict(cp['model_state_dict'])
+        optimizer.load_state_dict(cp['optimizer_state_dict'])
+        start_epoch = cp['epoch']
+        best_loss = cp['loss']
+        print(f"Resumed {args.model} at epoch {start_epoch}, loss {best_loss:.4f}")
 
-# Training Loop
-for epoch in range(start_epoch, config.EPOCHS):
-    model.train()
-    epoch_loss = 0
-    start_time = time.time()
+    # Metrics resume
+    metrics_path = os.path.join(metrics_dir, 'train_metrics.pth')
+    train_losses, map_scores, train_times = [], [], []
+    if os.path.exists(metrics_path):
+        data = torch.load(metrics_path)
+        train_losses = data['losses'][:start_epoch]
+        map_scores   = data['mAP'][:start_epoch // args.eval_interval]
+        train_times  = data['train_times'][:start_epoch]
+        print("Loaded previous metrics")
 
-    batch_idx = 0
-    for images, targets in train_loader:
-        images, targets = images.to(config.device), targets.to(config.device)
-        out = model(images)
-        loss = loss_fn(out, targets)
+    # Training Loop
+    for epoch in range(start_epoch, args.epochs):
+        model.train()
+        epoch_loss = 0.0
+        t0 = time.time()
+        for imgs, targets in tqdm(train_loader, desc=f"Train Epoch {epoch+1}"):
+            imgs, targets = imgs.to(device), targets.to(device)
+            preds = model(imgs)
+            loss = loss_fn(preds, targets)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            epoch_loss += loss.item()
+        scheduler.step()
+        elapsed = time.time() - t0
+        train_times.append(elapsed)
+        avg_loss = epoch_loss / len(train_loader)
+        train_losses.append(avg_loss)
+        print(f"[Epoch {epoch+1}] Loss: {avg_loss:.4f}, Time: {elapsed:.2f}s")
 
-        optim.zero_grad()
-        loss.backward()
-        optim.step()
+        # Save best model
+        if avg_loss < best_loss:
+            best_loss = avg_loss
+            torch.save({
+                'epoch': epoch+1,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'loss': avg_loss
+            }, ckpt_path)
 
-        if first_few > 0:
-            first_few -= 1
-            print(loss.item())
-
-        epoch_loss += loss.item()
-        if batch_idx % 100 == 0:
-            print(loss.item())
-
-        batch_idx += 1
-
-    scheduler.step()
-
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    train_times.append(elapsed_time)
-
-    avg_loss = epoch_loss / len(train_loader)
-    train_losses.append(avg_loss)
-    print(f"[Epoch {epoch+1}] Loss: {avg_loss:.4f} | Time: {elapsed_time:.2f}s")
-
-    # Save best model
-    if avg_loss < best_loss:
-        best_loss = avg_loss
+        # Save last model every epoch
         torch.save({
-            'epoch': epoch + 1,
+            'epoch': epoch+1,
             'model_state_dict': model.state_dict(),
-            'optimizer_state_dict': optim.state_dict(),
-            'loss': avg_loss,
-        }, f"checkpoints/{config.model_name}/best_model.pth")
+            'optimizer_state_dict': optimizer.state_dict(),
+            'loss': avg_loss
+        }, last_path)
 
-    # Evaluate every 10 epochs
-    if epoch % 10 == 0:
-        model.eval()
-        metric = MeanAveragePrecision(backend="faster_coco_eval")
-        with torch.no_grad():
-            for images, targets in test_loader:
-                images, targets = images.to(config.device), targets.to(config.device)
-                preds = model(images)
-                preds_list, targets_list = batch_to_mAP_list(preds, targets)
-                metric.update(preds=preds_list, target=targets_list)
+        # Evaluate mAP
+        if (epoch+1) % args.eval_interval == 0:
+            model.eval()
+            metric = MeanAveragePrecision(backend="faster_coco_eval")
+            with torch.no_grad():
+                for imgs, targets in val_loader:
+                    imgs, targets = imgs.to(device), targets.to(device)
+                    preds = model(imgs)
+                    p_list, t_list = batch_to_mAP_list(preds, targets)
+                    metric.update(preds=p_list, target=t_list)
+            mAP = metric.compute()['map'].item()
+            map_scores.append(mAP)
+            print(f"[Epoch {epoch+1}] mAP: {mAP:.4f}")
 
-        result = metric.compute()
-        mAP = result['map'].item()
-        map_scores.append(mAP)
-        print(f"[Epoch {epoch+1}] mAP: {mAP:.4f}")
-
-    # Save metrics
-    torch.save({
-        'losses': train_losses,
-        'mAP': map_scores,
-        'train_times': train_times
-    }, f"metrics/{config.model_name}/train_metrics.pth")
-
-    plot_training_metrics(train_losses, map_scores, train_times, start_epoch, config.model_name)
-
+        # Save metrics & plot
+        torch.save({
+            'losses': train_losses,
+            'mAP': map_scores,
+            'train_times': train_times
+        }, metrics_path)
+        plot_training_metrics(train_losses, map_scores, train_times, start_epoch, args.model)

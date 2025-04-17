@@ -128,7 +128,11 @@ class YOLOv1ResNet(nn.Module):
 
         # Load backbone ResNet
         backbone = resnet50(weights=ResNet50_Weights.DEFAULT)
-        # backbone.requires_grad_(False)            # Freeze backbone weights
+        backbone.requires_grad_(False) # Freeze weights
+
+        # Unfreeze top blocks so we can learn a little bit
+        for param in backbone.layer4.parameters():
+            param.requires_grad = True
 
         # Delete last two layers and attach detection layers
         backbone.avgpool = nn.Identity()

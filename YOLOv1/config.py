@@ -13,3 +13,4 @@ VOC_CLASSES = [
 ]
 
 DATA_PATH="data"
+EVAL_INTERVAL = 10

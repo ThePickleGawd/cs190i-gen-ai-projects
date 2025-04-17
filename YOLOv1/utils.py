@@ -142,9 +142,9 @@ def plot_training_metrics(train_losses, map_scores, train_times, start_epoch, mo
     ax1.plot(train_losses, label='Loss', color='tab:blue')
     if map_scores:
         map_epochs = list(range(
-            start_epoch + config.EVAL_MAP_N,
-            start_epoch + config.EVAL_MAP_N + config.EVAL_MAP_N * len(map_scores),
-            config.EVAL_MAP_N
+            start_epoch + config.EVAL_INTERVAL,
+            start_epoch + config.EVAL_INTERVAL + config.EVAL_INTERVAL * len(map_scores),
+            config.EVAL_INTERVAL
         ))
         ax1.plot(map_epochs, [s * 100 for s in map_scores], label='mAP (%)', color='tab:green')
     ax1.set_xlabel("Epoch")

@@ -10,7 +10,6 @@ BATCH=64
 LR=1e-4
 EPOCHS=200
 LAMBDA_CLS=2.0
-EVAL_N=10
 SAVE_DIR="."
 
 mkdir -p logs
@@ -24,7 +23,6 @@ uv run train.py \
   --lr $LR \
   --epochs $EPOCHS \
   --lambda-cls $LAMBDA_CLS \
-  --eval-interval $EVAL_N \
-  --save-dir $SAVE_DIR 2>&1 | tee logs/train_${MODEL}.log
+  2>&1 | tee logs/train_${MODEL}.log
 
 echo "Done: logs/train_${MODEL}.log"

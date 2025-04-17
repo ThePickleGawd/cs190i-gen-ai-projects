@@ -6,9 +6,9 @@
 # ========================================
 
 MODEL="YOLOv1"
-BATCH=32
-LR=1e-3
-EPOCHS=200
+BATCH=64
+LR=1e-4
+EPOCHS=120
 LAMBDA_CLS=1.0
 EVAL_N=10
 SAVE_DIR="."
@@ -16,7 +16,7 @@ SAVE_DIR="."
 mkdir -p logs
 
 echo "Training $MODEL..."
-python train.py \
+uv run train.py \
   --model $MODEL \
   --batch-size $BATCH \
   --lr $LR \

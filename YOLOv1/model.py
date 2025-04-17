@@ -145,6 +145,7 @@ class YOLOv1ResNet(nn.Module):
 
     def forward(self, x):
         return self.model.forward(x)
+    
 class DetectionNet(nn.Module):
     """The layers added on for detection as described in the paper."""
 

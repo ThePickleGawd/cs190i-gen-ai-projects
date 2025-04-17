@@ -1,90 +1,161 @@
+import argparse
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from torchvision.ops import nms
 from torch.utils.data import DataLoader
 from data import VOCDataset
 from model import YOLOv1ResNet
 import config
 
+# Argument parsing
+parser = argparse.ArgumentParser(description="Visualize YOLO predictions")
+parser.add_argument('--no-gt', dest='show_gt', action='store_false',
+                    help='Disable ground truth box overlay')
+parser.set_defaults(show_gt=True)
+args = parser.parse_args()
+SHOW_GT = args.show_gt
+
+# Device setup
+device = torch.device(
+    "cuda" if torch.cuda.is_available() else
+    "mps"  if torch.backends.mps.is_available() else
+    "cpu"
+)
+print(f"Using device: {device}, show_gt={SHOW_GT}")
+
 # Load model
-model = YOLOv1ResNet().to(config.device)
-state_dict = torch.load("checkpoints/YOLOv1ResNet/best_model.pth", map_location=config.device)
-model.load_state_dict(state_dict["model_state_dict"])
+model = YOLOv1ResNet().to(device)
+state = torch.load("checkpoints/YOLOv1ResNet/best_model.pth", map_location=device)
+model.load_state_dict(state["model_state_dict"])
 model.eval()
 
-# Load dataset
+# Dataset
 dataset = VOCDataset("val")
+loader = DataLoader(dataset, batch_size=1, shuffle=False)
 
+# Visualization setup
 fig, ax = plt.subplots()
+
+# NMS parameters
+CONF_THRESH = 0.5
+IOU_THRESH = 0.4
+
 
 def draw_image(idx):
     ax.clear()
-
     img, target = dataset[idx]
-    img = img.unsqueeze(0)
-    target = target.unsqueeze(0)
+    img_batch = img.unsqueeze(0).to(device)
 
     with torch.no_grad():
-        out = model(img.to(config.device)).cpu()
+        out = model(img_batch).cpu().squeeze(0)
 
-    img_np = img.squeeze().permute(1, 2, 0).cpu().numpy()
-    img_h, img_w = img_np.shape[:2]
-    x_cell_size = img_w / config.S
-    y_cell_size = img_h / config.S
-
-    target = target[0].view(config.S, config.S, config.B, 5 + config.C)
-    pred = out[0].view(config.S, config.S, config.B, 5 + config.C)
-
+    # Prepare image
+    img_np = img.permute(1, 2, 0).numpy()
     ax.imshow(img_np)
-    for i in range(1, config.S):
-        ax.axhline(i * y_cell_size, color='white', linestyle='--', linewidth=0.5)
-        ax.axvline(i * x_cell_size, color='white', linestyle='--', linewidth=0.5)
+    ax.axis('off')
 
-    def draw_box(i, j, box, color, label=None):
-        x, y, w, h = box[:4]
-        box_x = (j + x) * x_cell_size
-        box_y = (i + y) * y_cell_size
-        box_w = np.exp(w) * x_cell_size
-        box_h = np.exp(h) * y_cell_size
-        top_left_x = box_x - box_w / 2
-        top_left_y = box_y - box_h / 2
+    # Cell sizes
+    H, W = img_np.shape[:2]
+    cell_w = W / config.S
+    cell_h = H / config.S
 
-        rect = patches.Rectangle((top_left_x, top_left_y), box_w, box_h,
-                                 linewidth=2, edgecolor=color, facecolor='none')
-        ax.add_patch(rect)
-        ax.plot(box_x, box_y, marker='o', color=color, markersize=3)
-        if label:
-            ax.text(top_left_x, top_left_y - 5, label,
-                    color='white', fontsize=8, backgroundcolor=color)
+    # Optionally draw Ground Truth boxes (red)
+    if SHOW_GT:
+        gt = target.view(config.S, config.S, config.B, 5 + config.C)
+        for i in range(config.S):
+            for j in range(config.S):
+                for b in range(config.B):
+                    tb = gt[i, j, b]
+                    if tb[4] > 0.5:
+                        cls_idx = tb[5:].argmax().item()
+                        x, y, w, h = tb[0].item(), tb[1].item(), tb[2].item(), tb[3].item()
+                        cx = (j + x) * cell_w
+                        cy = (i + y) * cell_h
+                        bw = np.exp(w) * cell_w
+                        bh = np.exp(h) * cell_h
+                        x1 = cx - bw / 2
+                        y1 = cy - bh / 2
+                        rect = patches.Rectangle((x1, y1), bw, bh,
+                                                 linewidth=2, edgecolor='r', facecolor='none')
+                        ax.add_patch(rect)
+                        ax.text(x1, y1 - 5,
+                                config.VOC_CLASSES[cls_idx],
+                                color='white', backgroundcolor='r', fontsize=8)
+
+    # Collect detections
+    boxes, scores, labels = [], [], []
+    preds = out.view(config.S, config.S, config.B, 5 + config.C)
 
     for i in range(config.S):
         for j in range(config.S):
             for b in range(config.B):
-                t_box = target[i, j, b]
-                p_box = pred[i, j, b]
+                p = preds[i, j, b]
+                p_conf = p[4].item()
+                if p_conf < CONF_THRESH:
+                    continue
 
-                if t_box[4] > 0.5:
-                    t_class_idx = torch.argmax(t_box[5:]).item()
-                    t_label = config.VOC_CLASSES[t_class_idx]
-                    draw_box(i, j, t_box, 'r', label=t_label)
+                cls_probs = p[5:]
+                cls_idx = torch.argmax(cls_probs).item()
+                score = p_conf * cls_probs[cls_idx].item()
 
-                if p_box[4] > 0.5:
-                    p_class_idx = torch.argmax(p_box[5:]).item()
-                    p_label = config.VOC_CLASSES[p_class_idx]
-                    draw_box(i, j, p_box, 'g', label=p_label)
+                x, y, w, h = p[0].item(), p[1].item(), p[2].item(), p[3].item()
+                cx = (j + x) * cell_w
+                cy = (i + y) * cell_h
+                bw = np.exp(w) * cell_w
+                bh = np.exp(h) * cell_h
+                x1 = cx - bw / 2
+                y1 = cy - bh / 2
+                x2 = cx + bw / 2
+                y2 = cy + bh / 2
 
-    ax.set_title("Red = Ground Truth, Green = Prediction + Labels")
-    ax.axis('off')
+                boxes.append([x1, y1, x2, y2])
+                scores.append(score)
+                labels.append(cls_idx)
+
+    if not boxes:
+        plt.title("No detections above threshold")
+        fig.canvas.draw()
+        return
+
+    boxes_t = torch.tensor(boxes, dtype=torch.float32, device=device)
+    scores_t = torch.tensor(scores, dtype=torch.float32, device=device)
+
+    # Per-class NMS
+    keep_indices = []
+    for cls in set(labels):
+        inds = [i for i, l in enumerate(labels) if l == cls]
+        cls_boxes = boxes_t[inds]
+        cls_scores = scores_t[inds]
+        keep = nms(cls_boxes, cls_scores, IOU_THRESH)
+        keep_indices.extend([inds[i] for i in keep])
+
+    # Draw kept detections (green)
+    for idx in keep_indices:
+        x1, y1, x2, y2 = boxes[idx]
+        cls = labels[idx]
+        score = scores[idx]
+        rect = patches.Rectangle((x1, y1), x2 - x1, y2 - y1,
+                                 linewidth=2, edgecolor='g', facecolor='none')
+        ax.add_patch(rect)
+        ax.text(x1, y1 - 5,
+                f"{config.VOC_CLASSES[cls]}:{score:.2f}",
+                color='white', backgroundcolor='g', fontsize=8)
+
+    plt.title(f"{'Gnd Truth (Red), ' if SHOW_GT else ''}Predictions (Green)")
     fig.canvas.draw()
 
-index = [0]  # Mutable container to allow update inside callback
+
+# Interactive callback
+index = [0]
 
 def on_key(event):
     if event.key == ' ':
-        index[0] = torch.randint(0, len(dataset), (1,)).item()
+        index[0] = (index[0] + 1) % len(dataset)
         draw_image(index[0])
 
 fig.canvas.mpl_connect('key_press_event', on_key)
+# Initial draw
 draw_image(index[0])
 plt.show()

@@ -6,7 +6,9 @@ from utils import batch_iou
 import config
 
 class YOLOLoss(nn.Module):
-    def __init__(self):
+    def __init__(self, lambda_class):
+        self.lambda_class = lambda_class # Multiplier for classification
+
         super().__init__()
 
     def forward(self, preds: torch.Tensor, targets: torch.Tensor):

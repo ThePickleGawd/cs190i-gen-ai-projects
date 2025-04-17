@@ -9,21 +9,20 @@ MODEL="YOLOv1ResNet"
 BATCH=74
 LR=1e-5
 EPOCHS=200
-LAMBDA_CLS=2.0  # stronger classification weight
+LAMBDA_CLS=2.0
 EVAL_N=10
 SAVE_DIR="."
 
 mkdir -p logs
 
 echo "Training $MODEL..."
-python train.py \
+uv run train.py \
   --model $MODEL \
   --batch-size $BATCH \
   --lr $LR \
   --epochs $EPOCHS \
   --lambda-cls $LAMBDA_CLS \
   --eval-interval $EVAL_N \
-  --save-dir $SAVE_DIR \
-  > logs/train_${MODEL}.log 2>&1
+  --save-dir $SAVE_DIR 2>&1 | tee logs/train_${MODEL}.log
 
 echo "Done: logs/train_${MODEL}.log"

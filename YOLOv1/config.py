@@ -1,5 +1,3 @@
-# config.py
-
 # Image + grid settings from the paper
 IMG_SIZE = (448, 448)
 S = 7
@@ -13,3 +11,5 @@ VOC_CLASSES = [
     "diningtable", "dog", "horse", "motorbike", "person",
     "pottedplant", "sheep", "sofa", "train", "tvmonitor"
 ]
+
+DATA_PATH="data"

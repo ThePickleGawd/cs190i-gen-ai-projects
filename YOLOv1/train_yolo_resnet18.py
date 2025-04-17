@@ -68,9 +68,9 @@ train_times = []
 metrics_path = f"metrics/{config.model_name}/train_metrics.pth"
 if os.path.exists(metrics_path):
     metrics = torch.load(metrics_path)
-    train_losses = metrics['losses']
-    map_scores = metrics['mAP']
-    train_times = metrics['train_times']
+    train_losses = metrics['losses'][:start_epoch]
+    map_scores = metrics['mAP'][:start_epoch // config.EVAL_MAP_N]  # because mAP is saved every 10 epochs
+    train_times = metrics['train_times'][:start_epoch]
     print(f"Loading saved metrics")
 
 # LR Scheduler

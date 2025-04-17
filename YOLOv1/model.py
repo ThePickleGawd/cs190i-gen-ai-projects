@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision.models import resnet50, ResNet50_Weights, resnet18
+from torchvision.models import resnet50, ResNet50_Weights, resnet18, ResNet18_Weights
 
 import config
 
@@ -118,8 +118,7 @@ class YOLOv1ViT(nn.Module):
     def forward(self, X):
         pass
 
-
-# YOLOv1 with ResNet backbone
+# YOLOv1 with ResNet50 backbone
 
 class YOLOv1ResNet(nn.Module):
     def __init__(self):
@@ -146,7 +145,6 @@ class YOLOv1ResNet(nn.Module):
 
     def forward(self, x):
         return self.model.forward(x)
-
 class DetectionNet(nn.Module):
     """The layers added on for detection as described in the paper."""
 
@@ -180,11 +178,7 @@ class DetectionNet(nn.Module):
     def forward(self, x):
         x = self.model(x)
         return x.view(-1, config.S, config.S, self.depth)
-    
-class Reshape(nn.Module):
-
-
-# YOLOv1 with ResNet18 backbone From Scratch
+class Reshape(nn.Module):  
     def __init__(self, *args):
         super().__init__()
         self.shape = tuple(args)
@@ -192,6 +186,7 @@ class Reshape(nn.Module):
     def forward(self, x):
         return torch.reshape(x, (-1, *self.shape))
     
+# YOLOv1 with ResNet18: Both pretrained and blank weights
 class ResNet18Classifier(nn.Module):
     def __init__(self, num_classes=20):  # VOC has 20 classes
         super().__init__()
@@ -221,12 +216,34 @@ class YOLOv1ResNet18(nn.Module):
     def __init__(self):
         super().__init__()
         self.backbone = ResNetBackbone()
-        self.head = nn.Sequential(
-            nn.Flatten(),
-            nn.Linear(512 * 14 * 14, 4096),  # fixed input dim from ResNet18
-            nn.LeakyReLU(0.1),
-            nn.Linear(4096, config.S * config.S * (config.B * (5 + config.C)))
+        self.head = DetectionNet(512)
+
+    def forward(self, x):
+        features = self.backbone(x)
+        out = self.head(features)
+        return out.view(-1, config.S, config.S, config.B * (5 + config.C))
+
+
+class PretrainedResNetBackbone(nn.Module):
+    def __init__(self):
+        super().__init__()
+        resnet = resnet18(weights=ResNet18_Weights.DEFAULT)
+        self.features = nn.Sequential(
+            resnet.conv1, resnet.bn1, resnet.relu, resnet.maxpool,
+            resnet.layer1,
+            resnet.layer2,
+            resnet.layer3,
+            resnet.layer4
         )
+
+    def forward(self, x):
+        return self.features(x)
+
+class PretrainedYOLOv1ResNet18(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.backbone = PretrainedResNetBackbone()
+        self.head = DetectionNet(512)
 
     def forward(self, x):
         features = self.backbone(x)

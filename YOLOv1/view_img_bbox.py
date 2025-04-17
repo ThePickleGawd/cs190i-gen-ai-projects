@@ -6,7 +6,7 @@ import matplotlib.patches as patches
 from torchvision.ops import nms
 from torch.utils.data import DataLoader
 from data import VOCDataset
-from model import YOLOv1ResNet
+from model import YOLOv1ResNet, YOLOv1
 import config
 
 # Argument parsing

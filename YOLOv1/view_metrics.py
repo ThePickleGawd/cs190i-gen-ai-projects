@@ -1,7 +1,6 @@
 import torch
 import matplotlib.pyplot as plt
 import os
-import config  # assumes config.model_name and config.EPOCHS are defined
 from utils import plot_training_metrics
 
 

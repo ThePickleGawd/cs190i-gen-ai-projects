@@ -104,9 +104,9 @@ class YOLOv1(nn.Module):
         output = self.out(X)
 
         # x,y,conf sigmoid for each bounding box
-        output = output.view(-1, config.S, config.S, config.B, 5 + config.C)
-        output[..., 0:2] = F.sigmoid(output[..., 0:2])
-        output[..., 4] = F.sigmoid(output[..., 4])
+        # output = output.view(-1, config.S, config.S, config.B, 5 + config.C)
+        # output[..., 0:2] = F.sigmoid(output[..., 0:2])
+        # output[..., 4] = F.sigmoid(output[..., 4])
 
         output = output.view(-1, config.S, config.S, self.depth)
         return output

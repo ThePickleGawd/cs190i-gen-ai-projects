@@ -60,7 +60,7 @@ class YOLOLoss(nn.Module):
         # Use cross entropy instead of squared error for classification
         class_preds = preds[..., 5:][obj_ij]
         class_targets = gnd_truth[..., 5:][obj_ij].argmax(-1)
-        loss += F.cross_entropy(class_preds.reshape(-1, C), class_targets.reshape(-1))
+        loss += self.lambda_class * F.cross_entropy(class_preds.reshape(-1, C), class_targets.reshape(-1))
 
         return loss / N
     

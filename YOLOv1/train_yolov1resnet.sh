@@ -10,7 +10,6 @@ BATCH=64
 LR=1e-4
 EPOCHS=200
 LAMBDA_CLS=2.0
-SAVE_DIR="."
 
 mkdir -p logs
 
@@ -23,6 +22,7 @@ uv run train.py \
   --lr $LR \
   --epochs $EPOCHS \
   --lambda-cls $LAMBDA_CLS \
+  --save-last-checkpoint \
   2>&1 | tee logs/train_${MODEL}.log
 
 echo "Done: logs/train_${MODEL}.log"

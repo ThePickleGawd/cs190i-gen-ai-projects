@@ -25,6 +25,7 @@ def main():
     parser.add_argument("--epochs", type=int, default=200)
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--lambda-cls", type=float, default=1.0)
+    parser.add_argument("--save-last-checkpoint", action="store_true", default=False)
     args = parser.parse_args()
 
     # Device
@@ -93,10 +94,10 @@ def main():
 
     # LR Scheduler
     def lr_lambda(epoch):
-        if epoch < 15:
+        if epoch < 25:
             return 1.0
-        elif epoch < 45:
-            t = (epoch - 15) / 30
+        elif epoch < 75:
+            t = (epoch - 25) / 50
             return 10.0 * 0.5 * (1 - math.cos(math.pi * t))
         else:
             return 1.0
@@ -137,13 +138,14 @@ def main():
             }, ckpt_path)
 
         # Save last
-        last_path = f"checkpoints/{args.model}/last_model.pth"
-        torch.save({
-            'epoch': epoch+1,
-            'model_state_dict': model.state_dict(),
-            'optimizer_state_dict': optimizer.state_dict(),
-            'loss': avg_loss
-        }, last_path)
+        if args.save_last_checkpoint:
+            last_path = f"checkpoints/{args.model}/last_model.pth"
+            torch.save({
+                'epoch': epoch+1,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'loss': avg_loss
+            }, last_path)
 
         # Evaluate mAP
         if (epoch % config.EVAL_INTERVAL) == 0:

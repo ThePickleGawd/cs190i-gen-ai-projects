@@ -6,7 +6,7 @@ from utils import plot_training_metrics
 
 
 # Load metrics
-metrics_path = f"metrics/{config.model_name}/train_metrics.pth"
+metrics_path = f"metrics/YOLOv1ResNet/train_metrics.pth"
 assert os.path.exists(metrics_path), "No saved metrics found."
 
 metrics = torch.load(metrics_path)

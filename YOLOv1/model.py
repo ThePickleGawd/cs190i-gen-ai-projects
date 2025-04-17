@@ -179,6 +179,7 @@ class DetectionNet(nn.Module):
     def forward(self, x):
         x = self.model(x)
         return x.view(-1, config.S, config.S, self.depth)
+    
 class Reshape(nn.Module):  
     def __init__(self, *args):
         super().__init__()
@@ -186,67 +187,3 @@ class Reshape(nn.Module):
 
     def forward(self, x):
         return torch.reshape(x, (-1, *self.shape))
-    
-# YOLOv1 with ResNet18: Both pretrained and blank weights
-class ResNet18Classifier(nn.Module):
-    def __init__(self, num_classes=20):  # VOC has 20 classes
-        super().__init__()
-        self.base = resnet18(weights=None)
-        in_features = self.base.fc.in_features
-        self.base.fc = nn.Linear(in_features, num_classes)
-
-    def forward(self, x):
-        return self.base(x)
-
-class ResNetBackbone(nn.Module):
-    def __init__(self):
-        super().__init__()
-        resnet = resnet18(weights=None)
-        self.features = nn.Sequential(
-            resnet.conv1, resnet.bn1, resnet.relu, resnet.maxpool,
-            resnet.layer1,
-            resnet.layer2,
-            resnet.layer3,
-            resnet.layer4
-        )
-
-    def forward(self, x):
-        return self.features(x)
-
-class YOLOv1ResNet18(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.backbone = ResNetBackbone()
-        self.head = DetectionNet(512)
-
-    def forward(self, x):
-        features = self.backbone(x)
-        out = self.head(features)
-        return out.view(-1, config.S, config.S, config.B * (5 + config.C))
-
-
-class PretrainedResNetBackbone(nn.Module):
-    def __init__(self):
-        super().__init__()
-        resnet = resnet18(weights=ResNet18_Weights.DEFAULT)
-        self.features = nn.Sequential(
-            resnet.conv1, resnet.bn1, resnet.relu, resnet.maxpool,
-            resnet.layer1,
-            resnet.layer2,
-            resnet.layer3,
-            resnet.layer4
-        )
-
-    def forward(self, x):
-        return self.features(x)
-
-class PretrainedYOLOv1ResNet18(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.backbone = PretrainedResNetBackbone()
-        self.head = DetectionNet(512)
-
-    def forward(self, x):
-        features = self.backbone(x)
-        out = self.head(features)
-        return out.view(-1, config.S, config.S, config.B * (5 + config.C))

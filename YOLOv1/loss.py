@@ -64,9 +64,3 @@ class YOLOLoss(nn.Module):
 
         return loss / N
     
-class ResNetLoss(nn.Module):
-    def __init__(self):
-        super().__init__()
-
-    def forward():
-        pass

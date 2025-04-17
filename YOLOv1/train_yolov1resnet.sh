@@ -6,8 +6,8 @@
 # ========================================
 
 MODEL="YOLOv1ResNet"
-BATCH=74
-LR=1e-5
+BATCH=64
+LR=1e-4
 EPOCHS=200
 LAMBDA_CLS=2.0
 EVAL_N=10
@@ -16,6 +16,8 @@ SAVE_DIR="."
 mkdir -p logs
 
 echo "Training $MODEL..."
+echo "LR=$LR EPOCHS=$EPOCHS BATCH=$BATCH"
+echo "CLASSIFICATION BOOST=$LAMBDA_CLS"
 uv run train.py \
   --model $MODEL \
   --batch-size $BATCH \

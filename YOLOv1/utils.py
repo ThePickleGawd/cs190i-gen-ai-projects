@@ -133,7 +133,7 @@ def batch_to_mAP_list(preds: torch.Tensor, targets: torch.Tensor):
     return preds_list, targets_list
 
 
-def plot_training_metrics(train_losses, map_scores, train_times, start_epoch, model_name, save_dir="images"):
+def plot_training_metrics(train_losses, map_scores, train_times, model_name, save_dir="images"):
     os.makedirs(f"{save_dir}/{model_name}", exist_ok=True)
 
     fig, ax1 = plt.subplots()
@@ -142,8 +142,8 @@ def plot_training_metrics(train_losses, map_scores, train_times, start_epoch, mo
     ax1.plot(train_losses, label='Loss', color='tab:blue')
     if map_scores:
         map_epochs = list(range(
-            start_epoch + config.EVAL_INTERVAL,
-            start_epoch + config.EVAL_INTERVAL + config.EVAL_INTERVAL * len(map_scores),
+            config.EVAL_INTERVAL,
+            config.EVAL_INTERVAL + config.EVAL_INTERVAL * len(map_scores),
             config.EVAL_INTERVAL
         ))
         ax1.plot(map_epochs, [s * 100 for s in map_scores], label='mAP (%)', color='tab:green')

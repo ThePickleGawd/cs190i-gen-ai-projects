@@ -45,8 +45,8 @@ class YOLOLoss(nn.Module):
         loss += lambda_coord * torch.sum(obj_ij.float() * (gnd_truth[..., 1] - preds[..., 1]) ** 2)
 
         # w,h loss no sqrt
-        loss += lambda_coord * torch.sum(obj_ij.float() * (torch.sqrt(torch.exp(gnd_truth[..., 2])) - torch.sqrt(torch.exp(preds[..., 2]))) ** 2)
-        loss += lambda_coord * torch.sum(obj_ij.float() * (torch.sqrt(torch.exp(gnd_truth[..., 3])) - torch.sqrt(torch.exp(preds[..., 3]))) ** 2)
+        loss += lambda_coord * torch.sum(obj_ij.float() * (torch.sqrt(torch.exp(gnd_truth[..., 2])) - torch.sqrt(torch.exp(torch.clamp(preds[..., 2], max=3)))) ** 2)
+        loss += lambda_coord * torch.sum(obj_ij.float() * (torch.sqrt(torch.exp(gnd_truth[..., 3])) - torch.sqrt(torch.exp(torch.clamp(preds[..., 3], max=3)))) ** 2)
 
         ## Confidence Loss
 

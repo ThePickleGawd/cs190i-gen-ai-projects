@@ -133,6 +133,10 @@ class YOLOv1ResNet(nn.Module):
         for param in backbone.layer4.parameters():
             param.requires_grad = True
 
+        # Adding this after 200 epochs
+        for param in backbone.layer3.parameters():
+            param.requires_grad = True
+
         # Delete last two layers and attach detection layers
         backbone.avgpool = nn.Identity()
         backbone.fc = nn.Identity()

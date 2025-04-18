@@ -73,7 +73,7 @@ def main():
     # Resume from checkpoint
     start_epoch = 0
     best_loss = float('inf')
-    ckpt_path = f"checkpoints/{args.model}/best_model.pth"
+    ckpt_path = f"checkpoints/{args.model}/last_model.pth"
     if os.path.exists(ckpt_path):
         ckpt = torch.load(ckpt_path, map_location=device)
         model.load_state_dict(ckpt['model_state_dict'])
@@ -170,7 +170,7 @@ def main():
         }, metrics_path)
 
         # Plot metrics
-        plot_training_metrics(train_losses, map_scores, train_times, start_epoch, args.model)
+        plot_training_metrics(train_losses, map_scores, train_times, args.model)
 
 
 if __name__ == '__main__':

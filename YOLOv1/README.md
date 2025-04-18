@@ -13,5 +13,13 @@ DeiT on PASCAL VOC: https://www.ecva.net/papers/eccv_2024/papers_ECCV/papers/115
 # YOLOv1ResNet Notes
 
 1. Used pretrained ResNet50 as backbone. Detector as normal without dropout
-2. Trained for 150 epochs with frozen backbone
-3. Trained for \_\_\_ epochs with last backbone layer unfrozen and boosting loss for classification
+2. Trained for 150 epochs with frozen backbone @ LR=1e-4
+3. Trained for 30 epochs with last backbone layer unfrozen and LAMBDA_CLS=2 @ LR=1e-4
+4. Trained for 20 epochs with last backbone layer unfrozen and LAMBDA_CLS=50 @ LR=1e-2
+5. Trained for 25 epochs last last two backbone layers unfrozen. LAMBDA_CLS=50 @ LR=1e-2
+
+# Next Steps
+
+1. Train ResNet18 as classification
+2. Unfreeze top two layers and attach head
+3. Train

@@ -27,7 +27,7 @@ print(f"Using device: {device}, show_gt={SHOW_GT}")
 
 # Load model
 model = YOLOv1ResNet().to(device)
-state = torch.load("checkpoints/YOLOv1ResNet/best_model.pth", map_location=device)
+state = torch.load("checkpoints/YOLOv1ResNet/last_model.pth", map_location=device)
 model.load_state_dict(state["model_state_dict"])
 model.eval()
 
@@ -142,6 +142,7 @@ def draw_image(idx):
         ax.text(x1, y1 - 5,
                 f"{config.VOC_CLASSES[cls]}:{score:.2f}",
                 color='white', backgroundcolor='g', fontsize=8)
+        print(config.VOC_CLASSES[cls])
 
     plt.title(f"{'Gnd Truth (Red), ' if SHOW_GT else ''}Predictions (Green)")
     fig.canvas.draw()

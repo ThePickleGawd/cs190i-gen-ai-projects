@@ -96,3 +96,48 @@ class VOCDataset(Dataset):
                 break
 
         return image, target
+
+
+class VOCClassificationDataset(Dataset):
+    def __init__(self, image_set="train"):
+        # load VOC
+        self.voc = VOCDetection(
+            root=config.DATA_PATH,
+            year="2012",
+            image_set=image_set,
+            download=False,
+            transform=None
+        )
+        # mapping class name => index
+        self.classes = config.VOC_CLASSES
+        self.class_to_idx = {cls:i for i,cls in enumerate(self.classes)}
+        self.num_classes = len(self.classes)
+
+        self.image_transform = v2.Compose([
+            v2.ToImage(),
+            v2.Resize(config.IMG_SIZE),
+            v2.RandomHorizontalFlip() if image_set=="train" else v2.Identity(),
+            v2.ToDtype(torch.float32, scale=True),
+        ])
+
+    def __len__(self):
+        return len(self.voc)
+
+    def __getitem__(self, idx):
+        pil_img, info = self.voc[idx]
+        # pull out all object labels (might be a single dict)
+        labels = info["annotation"]["object"]
+        if not isinstance(labels, list):
+            labels = [labels]
+
+        # build multi‑hot target
+        y = torch.zeros(self.num_classes, dtype=torch.float32)
+        for obj in labels:
+            cls_name = obj["name"]
+            y[self.class_to_idx[cls_name]] = 1.0
+
+        # apply your v2 transforms
+        img = Image(pil_img)
+        img = self.image_transform(img)
+
+        return img, y

@@ -191,3 +191,44 @@ class Reshape(nn.Module):
 
     def forward(self, x):
         return torch.reshape(x, (-1, *self.shape))
+    
+
+# YOLO with untrained ResNet18 backbone. We train classification then detection
+    
+class ResNet18(nn.Module):
+    def __init__(self):
+        super().__init__()
+        # Load backbone ResNet
+        self.model = resnet18()
+        self.model.fc = nn.Linear(512, config.C) # 20 classes
+        
+    def forward(self, x):
+        return self.model.forward(x)
+
+class YOLOv1ResNet18(nn.Module):
+    def __init__(self, backbone_weights=None):
+        super().__init__()
+        self.depth = config.B * (5 + config.C)
+
+        # Load backbone ResNet
+        backbone = ResNet18()
+        assert backbone_weights is not None, "Backbone weights must be provided"
+        backbone.load_state_dict(torch.load(backbone_weights)["model_state_dict"])
+        backbone.requires_grad_(False) # Freeze weights
+
+        # Unfreeze top blocks so we can learn a little bit
+        for param in backbone.model.layer4.parameters():
+            param.requires_grad = True
+
+        # Delete last two layers and attach detection layers
+        backbone.model.avgpool = nn.Identity()
+        backbone.model.fc = nn.Identity()
+
+        self.model = nn.Sequential(
+            backbone.model,
+            Reshape(512, 14, 14),
+            DetectionNet(512)              # 4 conv, 2 linear
+        )
+
+    def forward(self, x):
+        return self.model.forward(x)

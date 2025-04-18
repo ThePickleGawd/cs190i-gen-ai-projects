@@ -7,9 +7,9 @@
 
 MODEL="YOLOv1ResNet"
 BATCH=64
-LR=5e-2
+LR=1e-2
 EPOCHS=300
-LAMBDA_CLS=50.0
+LAMBDA_CLS=10.0
 
 mkdir -p logs
 

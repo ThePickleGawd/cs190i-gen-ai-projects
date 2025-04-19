@@ -130,12 +130,10 @@ class YOLOv1ResNet(nn.Module):
         backbone.requires_grad_(False) # Freeze weights
 
         # Unfreeze top blocks so we can learn a little bit
-        for param in backbone.layer4.parameters():
-            param.requires_grad = True
-
-        # Adding this after 200 epochs
-        for param in backbone.layer3.parameters():
-            param.requires_grad = True
+        # for param in backbone.layer4.parameters():
+        #     param.requires_grad = True
+        # for param in backbone.layer3.parameters():
+        #     param.requires_grad = True
 
         # Delete last two layers and attach detection layers
         backbone.avgpool = nn.Identity()
@@ -151,30 +149,35 @@ class YOLOv1ResNet(nn.Module):
         return self.model.forward(x)
     
 class DetectionNet(nn.Module):
-    """The layers added on for detection as described in the paper."""
+    """The layers added on for detection as described in the YOLOv1 paper, with BatchNorm."""
 
     def __init__(self, in_channels):
         super().__init__()
 
         inner_channels = 1024
         self.depth = config.B * (5 + config.C)
+
         self.model = nn.Sequential(
             nn.Conv2d(in_channels, inner_channels, kernel_size=3, padding=1),
+            nn.BatchNorm2d(inner_channels),
             nn.LeakyReLU(negative_slope=0.1),
 
-            nn.Conv2d(inner_channels, inner_channels, kernel_size=3, stride=2, padding=1),   # (Ch, 14, 14) -> (Ch, 7, 7)
+            nn.Conv2d(inner_channels, inner_channels, kernel_size=3, stride=2, padding=1),
+            nn.BatchNorm2d(inner_channels),
             nn.LeakyReLU(negative_slope=0.1),
 
             nn.Conv2d(inner_channels, inner_channels, kernel_size=3, padding=1),
+            nn.BatchNorm2d(inner_channels),
             nn.LeakyReLU(negative_slope=0.1),
 
             nn.Conv2d(inner_channels, inner_channels, kernel_size=3, padding=1),
+            nn.BatchNorm2d(inner_channels),
             nn.LeakyReLU(negative_slope=0.1),
 
             nn.Flatten(),
 
             nn.Linear(7 * 7 * inner_channels, 4096),
-            # nn.Dropout(),
+            nn.Dropout(0.5),
             nn.LeakyReLU(negative_slope=0.1),
 
             nn.Linear(4096, config.S * config.S * self.depth)
@@ -183,6 +186,7 @@ class DetectionNet(nn.Module):
     def forward(self, x):
         x = self.model(x)
         return x.view(-1, config.S, config.S, self.depth)
+
     
 class Reshape(nn.Module):  
     def __init__(self, *args):

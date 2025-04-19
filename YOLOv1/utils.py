@@ -146,7 +146,7 @@ def plot_training_metrics(train_losses, map_scores, train_times, model_name, sav
             config.EVAL_INTERVAL + config.EVAL_INTERVAL * len(map_scores),
             config.EVAL_INTERVAL
         ))
-        ax1.plot(map_epochs, [s * 100 for s in map_scores], label='mAP (%)', color='tab:green')
+        ax1.plot(map_epochs, [s * 100 / max(train_losses) for s in map_scores], label='mAP (%)', color='tab:green')
     ax1.set_xlabel("Epoch")
     ax1.set_ylabel("Loss / mAP", color='tab:blue')
     ax1.set_ylim(0, max(train_losses) * 1.3)

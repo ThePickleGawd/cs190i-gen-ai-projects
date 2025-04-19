@@ -60,8 +60,8 @@ def main():
                 p.requires_grad = True
         detector = model.model[2]
         optimizer = SGD([
-            {"params": backbone.layer3.parameters(), "lr": args.lr * 0.1},
-            {"params": backbone.layer4.parameters(), "lr": args.lr * 0.1},
+            {"params": backbone.layer3.parameters(), "lr": args.lr * 1},
+            {"params": backbone.layer4.parameters(), "lr": args.lr * 1},
             {"params": detector.parameters(),     "lr": args.lr},
         ], momentum=0.9, weight_decay=5e-4)
     else:
@@ -69,6 +69,7 @@ def main():
 
     # Loss
     loss_fn = YOLOLoss(lambda_class=args.lambda_cls)
+    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
     # Resume from checkpoint
     start_epoch = 0
@@ -94,13 +95,13 @@ def main():
 
     # LR Scheduler
     def lr_lambda(epoch):
-        if epoch < 25:
-            return 1.0
-        elif epoch < 75:
-            t = (epoch - 25) / 50
-            return 10.0 * 0.5 * (1 - math.cos(math.pi * t))
+        warmup_epochs = 15
+        total_epochs = args.epochs
+        if epoch < warmup_epochs:
+            return epoch / warmup_epochs
         else:
-            return 1.0
+            progress = (epoch - warmup_epochs) / (total_epochs - warmup_epochs)
+            return 0.5 * (1 + math.cos(math.pi * progress))  # cosine decay
     scheduler = LambdaLR(optimizer, lr_lambda=lr_lambda, last_epoch=start_epoch-1)
 
     # Training loop
@@ -135,7 +136,7 @@ def main():
                 'model_state_dict': model.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
                 'loss': avg_loss
-            }, ckpt_path)
+            }, f"checkpoints/{args.model}/best_model.pth")
 
         # Save last
         if args.save_last_checkpoint:

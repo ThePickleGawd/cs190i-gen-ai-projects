@@ -5,10 +5,10 @@
 # Usage: bash train_YOLOv1ResNet.sh
 # ========================================
 
-MODEL="YOLOv1ResNet"
+MODEL="YOLOv1ResNet18"
 BATCH=64
-LR=1e-3
-EPOCHS=300
+LR=1e-2
+EPOCHS=120
 LAMBDA_CLS=1
 
 mkdir -p logs

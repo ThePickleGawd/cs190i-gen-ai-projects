@@ -84,7 +84,7 @@ def main():
         print(f"Resumed from epoch {start_epoch}, loss {best_loss:.4f}")
 
     # Metrics history
-    train_losses, map_scores, train_times = [], [], []
+    train_losses, map_scores, train_times = [], [0], []
     metrics_path = f"metrics/{args.model}/train_metrics.pth"
     if os.path.exists(metrics_path):
         m = torch.load(metrics_path)
@@ -121,6 +121,9 @@ def main():
             epoch_loss += loss.item()
             pbar.set_postfix({'loss': loss.item()})
 
+            if torch.isnan(loss):
+                return
+
         scheduler.step()
         elapsed = time.time() - t0
         train_times.append(elapsed)
@@ -149,7 +152,7 @@ def main():
             }, last_path)
 
         # Evaluate mAP
-        if (epoch % config.EVAL_INTERVAL) == 0:
+        if epoch > 1 and (epoch % config.EVAL_INTERVAL) == 0:
             model.eval()
             metric = MeanAveragePrecision(backend="faster_coco_eval")
             with torch.no_grad():

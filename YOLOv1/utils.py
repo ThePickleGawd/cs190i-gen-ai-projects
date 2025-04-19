@@ -28,8 +28,8 @@ def xywh_to_xyxy(box):
     # Convert to absolute positions
     x_abs = (grid_x + x) * x_cell_size
     y_abs = (grid_y + y) * y_cell_size
-    w_abs = torch.exp(w) * x_cell_size
-    h_abs = torch.exp(h) * y_cell_size
+    w_abs = w * config.IMG_SIZE[0]
+    h_abs = h * config.IMG_SIZE[1]
 
     x1 = x_abs - w_abs / 2
     y1 = y_abs - h_abs / 2

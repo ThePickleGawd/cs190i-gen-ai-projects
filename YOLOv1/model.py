@@ -185,6 +185,11 @@ class DetectionNet(nn.Module):
 
     def forward(self, x):
         x = self.model(x)
+
+        # Apply sigmoid to x,y,w,h conf
+        x = x.view(-1, config.S, config.S, config.B)
+        x[:5] = F.sigmoid(x[:5])
+        
         return x.view(-1, config.S, config.S, self.depth)
 
     

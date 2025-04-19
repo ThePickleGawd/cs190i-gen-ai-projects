@@ -127,4 +127,4 @@ class YOLOV2Loss(nn.Module):
         )
 
         total_loss = xy_loss + wh_loss + conf_loss_obj + conf_loss_noobj + class_loss
-        return total_loss
+        return total_loss / N

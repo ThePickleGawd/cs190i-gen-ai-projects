@@ -73,8 +73,8 @@ def draw_image(idx):
                         x, y, w, h = tb[0].item(), tb[1].item(), tb[2].item(), tb[3].item()
                         cx = (j + x) * cell_w
                         cy = (i + y) * cell_h
-                        bw = np.exp(w) * cell_w
-                        bh = np.exp(h) * cell_h
+                        bw = w * config.IMG_SIZE[0]
+                        bh = h * config.IMG_SIZE[1]
                         x1 = cx - bw / 2
                         y1 = cy - bh / 2
                         rect = patches.Rectangle((x1, y1), bw, bh,
@@ -103,8 +103,8 @@ def draw_image(idx):
                 x, y, w, h = p[0].item(), p[1].item(), p[2].item(), p[3].item()
                 cx = (j + x) * cell_w
                 cy = (i + y) * cell_h
-                bw = np.exp(w) * cell_w
-                bh = np.exp(h) * cell_h
+                bw = w * config.IMG_SIZE[0]
+                bh = h * config.IMG_SIZE[1]
                 x1 = cx - bw / 2
                 y1 = cy - bh / 2
                 x2 = cx + bw / 2

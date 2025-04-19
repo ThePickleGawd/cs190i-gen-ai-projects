@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 from data import VOCDataset
 from model import YOLOv1, YOLOv1ViT, YOLOv1ResNet
-from loss import YOLOLoss
+from loss import YOLOLoss, YOLOV2Loss
 import config
 from utils import batch_to_mAP_list, plot_training_metrics
 
@@ -68,7 +68,7 @@ def main():
         optimizer = SGD(model.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
 
     # Loss
-    loss_fn = YOLOLoss(lambda_class=args.lambda_cls)
+    loss_fn = YOLOV2Loss(lambda_class=args.lambda_cls)
     torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
     # Resume from checkpoint

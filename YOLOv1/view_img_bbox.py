@@ -26,13 +26,13 @@ device = torch.device(
 print(f"Using device: {device}, show_gt={SHOW_GT}")
 
 # Load model
-model = YOLOv1ResNet().to(device)
-state = torch.load("checkpoints/YOLOv1ResNet/last_model.pth", map_location=device)
+model = YOLOv1().to(device)
+state = torch.load("checkpoints/YOLOv1/best_model.pth", map_location=device)
 model.load_state_dict(state["model_state_dict"])
 model.eval()
 
 # Dataset
-dataset = VOCDataset("val")
+dataset = VOCDataset("train")
 loader = DataLoader(dataset, batch_size=1, shuffle=False)
 
 # Visualization setup

@@ -82,7 +82,7 @@ def main():
 
     # LR Scheduler
     def lr_lambda(epoch):
-        warmup_epochs = 15
+        warmup_epochs = 5
         total_epochs = args.epochs
         if epoch < warmup_epochs:
             return epoch / warmup_epochs

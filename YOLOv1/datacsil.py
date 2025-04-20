@@ -78,8 +78,8 @@ class VOCDataset(Dataset):
 
             x = (x_center - x_cell_tl) / x_cell_size
             y = (y_center - y_cell_tl) / y_cell_size
-            w = np.log(((xmax - xmin) / x_cell_size) + config.EPSILON)
-            h = np.log(((ymax - ymin) / y_cell_size) + config.EPSILON)
+            w = (xmax - xmin) / config.IMG_SIZE[0]
+            h = (ymax - ymin) / config.IMG_SIZE[1]
 
             bbox = torch.tensor([x, y, w, h, 1.0])
             label_vector = torch.cat([bbox, one_hot])

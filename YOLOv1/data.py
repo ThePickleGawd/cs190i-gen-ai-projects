@@ -15,16 +15,18 @@ class VOCDataset(Dataset):
         self.image_transform = v2.Compose([
             v2.ToImage(),
             v2.Resize(config.IMG_SIZE),
-            v2.RandomAffine(
-                degrees=0,
-                translate=(0.2, 0.2),
-                scale=(0.8, 1.2)
-            ) if self.is_train else v2.Identity(),
+            v2.RandomHorizontalFlip() if self.is_train else v2.Identity(),
             v2.ColorJitter(saturation=0.5, brightness=0.5) if self.is_train else v2.Identity(),
             v2.ToDtype(torch.float32, scale=True),
         ])
 
-        self.dataset = VOCDetection(root=config.DATA_PATH, download=False, year="2012", image_set=image_set, transform=None)
+        self.dataset = VOCDetection(
+            root=config.DATA_PATH,
+            year="2012",
+            image_set=image_set,
+            download=False,
+            transform=None,
+        )
         self.classes = {cls: idx for idx, cls in enumerate(config.VOC_CLASSES)}
 
     def __len__(self):
@@ -32,10 +34,9 @@ class VOCDataset(Dataset):
 
     def __getitem__(self, idx):
         image, info = self.dataset[idx]
-
         labels = info["annotation"]["object"]
-        orig_img_size = info["annotation"]["size"]
-        orig_img_w, orig_img_h = int(orig_img_size["width"]), int(orig_img_size["height"])
+        size = info["annotation"]["size"]
+        orig_w, orig_h = int(size["width"]), int(size["height"])
 
         if not isinstance(labels, list):
             labels = [labels]
@@ -43,25 +44,22 @@ class VOCDataset(Dataset):
         boxes = []
         class_ids = []
 
-        for label in labels:
-            box = label["bndbox"]
-            xmin = int(box["xmin"]) * config.IMG_SIZE[0] / orig_img_w
-            xmax = int(box["xmax"]) * config.IMG_SIZE[0] / orig_img_w
-            ymin = int(box["ymin"]) * config.IMG_SIZE[1] / orig_img_h
-            ymax = int(box["ymax"]) * config.IMG_SIZE[1] / orig_img_h
+        for obj in labels:
+            bbox = obj["bndbox"]
+            xmin = int(bbox["xmin"]) * config.IMG_SIZE[0] / orig_w
+            xmax = int(bbox["xmax"]) * config.IMG_SIZE[0] / orig_w
+            ymin = int(bbox["ymin"]) * config.IMG_SIZE[1] / orig_h
+            ymax = int(bbox["ymax"]) * config.IMG_SIZE[1] / orig_h
             boxes.append([xmin, ymin, xmax, ymax])
-            class_ids.append(self.classes[label["name"]])
+            class_ids.append(self.classes[obj["name"]])
 
         boxes = torch.tensor(boxes, dtype=torch.float32)
         class_ids = torch.tensor(class_ids, dtype=torch.int64)
 
-        image = Image(image)
-        boxes = BoundingBoxes(boxes, format="XYXY", canvas_size=config.IMG_SIZE)
+        image = self.image_transform(image)
 
-        image, boxes = self.image_transform(image, boxes)
-
-        depth = config.B * (5 + config.C)
-        target = torch.zeros((config.S, config.S, depth), dtype=torch.float32)
+        # Same YOLO-style target generation as before
+        target = torch.zeros((config.S, config.S, config.B * (5 + config.C)), dtype=torch.float32)
 
         for i in range(len(boxes)):
             xmin, ymin, xmax, ymax = boxes[i]
@@ -71,27 +69,27 @@ class VOCDataset(Dataset):
 
             x_center = (xmin + xmax) / 2
             y_center = (ymin + ymax) / 2
+            w = (xmax - xmin) / config.IMG_SIZE[0]
+            h = (ymax - ymin) / config.IMG_SIZE[1]
+
             x_cell_size = config.IMG_SIZE[0] / config.S
             y_cell_size = config.IMG_SIZE[1] / config.S
 
             x_cell = min(int(x_center // x_cell_size), config.S - 1)
             y_cell = min(int(y_center // y_cell_size), config.S - 1)
 
-            x_cell_tl = x_cell * int(x_cell_size)
-            y_cell_tl = y_cell * int(y_cell_size)
-
-            x = (x_center - x_cell_tl) / x_cell_size
-            y = (y_center - y_cell_tl) / y_cell_size
-            w = (xmax - xmin) / config.IMG_SIZE[0]
-            h = (ymax - ymin) / config.IMG_SIZE[1]
+            x = (x_center - x_cell * x_cell_size) / x_cell_size
+            y = (y_center - y_cell * y_cell_size) / y_cell_size
 
             bbox = torch.tensor([x, y, w, h, 1.0])
-            label_vector = torch.concat([bbox, one_hot])
+            label_vector = torch.cat([bbox, one_hot])
 
             for b in range(config.B):
-                if torch.any(target[y_cell, x_cell, b*(5+config.C):(b+1)*(5+config.C)] != 0):
+                start = b * (5 + config.C)
+                end = (b + 1) * (5 + config.C)
+                if torch.any(target[y_cell, x_cell, start:end] != 0):
                     continue
-                target[y_cell, x_cell, b*(5+config.C):(b+1)*(5+config.C)] = label_vector
+                target[y_cell, x_cell, start:end] = label_vector
                 break
 
         return image, target

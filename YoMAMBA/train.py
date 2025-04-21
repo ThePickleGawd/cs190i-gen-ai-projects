@@ -1,5 +1,6 @@
 import os
 import torch
+import time
 from tqdm import tqdm
 import torch.optim as optim
 from torch.utils.data import DataLoader
@@ -24,37 +25,36 @@ save_model = True
 use_resnet18_backbone = True
 use_mamba_backbone = False
 
-# Train
-
-def train(train_loader, model, optimizer, loss_fn):
+# Train Model
+def train(train_loader, model, optimizer, loss_fn, epoch):
     """
     Input: train loader (torch loader), model (torch model), optimizer (torch optimizer)
           loss function (torch custom yolov1 loss).
     Output: loss (torch float).
     """
-    # Gradient accumulation parameter: perform gradient accumulation over 16
-    # batches
-    accum_iter = 16
     model.train()
 
     total_loss = 0.0
-    for batch_idx, (x, y) in enumerate(train_loader):
+    t0 = time.time()
+    pbar = tqdm(train_loader, desc=f"Train: Epoch {epoch+1}/{epochs}")
+    for batch_idx, (x, y) in enumerate(pbar):
         x, y = x.to(device), y.to(device)
         
-        with torch.set_grad_enabled(True):
-            out = model(x)
-            loss = loss_fn(out, y)
-            
-            loss.backward()
-            total_loss += loss.item()
-            
-            if ((batch_idx + 1) % accum_iter == 0) or (batch_idx + 1 == len(train_loader)):
-                optimizer.step()
-                optimizer.zero_grad()
+        out = model(x)
+        loss = loss_fn(out, y)
+        
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
 
-    return total_loss / len(train_loader)
+        total_loss += loss.item()
+        pbar.set_postfix({'loss': loss.item()})
+
+    elapsed = time.time() - t0
+    avg_loss = total_loss / len(train_loader)
+    return avg_loss, elapsed
     
-def val(val_loader, model, loss_fn):
+def val(val_loader, model, loss_fn, epoch):
     """
     Input: val loader (torch loader), model (torch model), loss function 
           (torch custom yolov1 loss).
@@ -64,14 +64,21 @@ def val(val_loader, model, loss_fn):
 
     with torch.no_grad():
         total_loss = 0.0
+        t0 = time.time()
+        pbar = tqdm(val_loader, desc=f"Val: Epoch: {epoch+1}/{epochs}")
         for batch_idx, (x, y) in enumerate(val_loader):
             x, y = x.to(device), y.to(device)
+
             out = model(x)
             loss = loss_fn(out, y)
-            total_loss += loss
 
-        return total_loss / len(val_loader)
+            total_loss += loss.item()
+            pbar.set_postfix({"loss": loss.item()})
 
+        elapsed = time.time() - t0
+        avg_loss = total_loss / len(val_loader)
+        return avg_loss, elapsed
+    
 def main():
     # Select model
     if use_mamba_backbone:
@@ -113,7 +120,6 @@ def main():
         val_loss_lst = m["val_losses"]
         val_mAP_lst = m["val_mAP"]
 
-
     def lr_lambda(epoch):
         if epoch <= 5: return 1 + 9 * (epoch / 5)     # linearly from 1× to 10×
         elif epoch <= 80: return 10                   # constant 10×
@@ -127,7 +133,7 @@ def main():
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, collate_fn=lambda b: tuple(zip(*b)))
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, collate_fn=lambda b: tuple(zip(*b)))
 
-    for epoch in tqdm(range(last_epoch, epochs)):
+    for epoch in range(last_epoch, epochs):
         # for training data
         pred_bbox, target_bbox = get_bboxes(train_loader, model, iou_threshold = 0.5, 
                                         threshold = 0.4)
@@ -135,14 +141,18 @@ def main():
         val_pred_bbox, val_target_bbox = get_bboxes(val_loader, model, iou_threshold = 0.5, 
                                         threshold = 0.4)                                
         
-        # Train and val Loss
-        train_loss_value = train(train_loader, model, optimizer, loss_fn)
+        # Train and Validation
+        train_loss_value, train_time = train(train_loader, model, optimizer, loss_fn, epoch)
         train_loss_lst.append(train_loss_value)
-        val_loss_value = val(val_loader, model, loss_fn)
+        val_loss_value, val_time = val(val_loader, model, loss_fn, epoch)
         val_loss_lst.append(val_loss_value)
 
-        print(f"Learning Rate:", optimizer.param_groups[0]["lr"])
-        print(f"Epoch:{epoch + last_epoch + 1 } Train[Loss:{train_loss_value} Val[Loss:{val_loss_value}")
+        print(
+            f"Epoch {epoch + last_epoch + 1} | "
+            f"LR: {optimizer.param_groups[0]['lr']:.2e} | "
+            f"Train Loss: {train_loss_value:.4f} ({train_time:.2f}s) | "
+            f"Val Loss: {val_loss_value:.4f} ({val_time:.2f}s)"
+        )
 
         # store mAP and average mAP
         if epoch > 0 and (epoch + 1) % eval_interval == 0:

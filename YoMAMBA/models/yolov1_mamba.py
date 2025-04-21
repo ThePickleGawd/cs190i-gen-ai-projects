@@ -4,9 +4,9 @@ import torchvision.models as models
 
 from transformers import AutoModel
 
-class YoloV1Mamba(nn.Module):
+class YoloV1_Mamba(nn.Module):
     def __init__(self, S = 7, B = 2, C = 20):
-        super(YoloV1Mamba, self).__init__()
+        super(YoloV1_Mamba, self).__init__()
 
         print("Using pretrained mambavision, layer4 unfrozen.")
         self.backbone = AutoModel.from_pretrained("nvidia/MambaVision-T-1K", trust_remote_code=True)
@@ -53,7 +53,7 @@ class YoloV1Mamba(nn.Module):
     def forward(self, x):
         out_avg_pool, features = self.backbone(x) # MAMBA supports any input resolution LOL!!! YAY
         x = features[3] # torch.Size([1, 640, 7, 7])
-        
+
         x = self.yolov1head(x)
         return x
     
@@ -63,7 +63,7 @@ class YoloV1Mamba(nn.Module):
                 self.yolov1head[i].weight.data = self.yolov1head[i].weight.data.normal_(0, 0.02)
                 self.yolov1head[i].bias.data = self.yolov1head[i].bias.data.zero_()
 def test ():
-    model = YoloV1Mamba()
+    model = YoloV1_Mamba()
     x = torch.rand(2, 3, 448, 448)
     xshape = model(x).shape
     return x, xshape

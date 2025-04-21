@@ -1,111 +1,32 @@
+import os
 import torch
-import torchvision.transforms as T
+from tqdm import tqdm
 import torch.optim as optim
 from torch.utils.data import DataLoader
-
-from utils.yolov1_utils import mean_average_precision as mAP
-from utils.yolov1_utils import get_bboxes, strip_square_brackets
-from data import VOCDataset
 from loss.yolov1_loss import YoloV1Loss
-from torch.optim import lr_scheduler
-from models.yolov1net_darknet import YoloV1Net
-from models.yolov1net_vgg19bn import YoloV1_Vgg19bn
-from models.yolov1net_resnet18 import YoloV1_Resnet18
-from models.yolov1net_resnet50 import YoloV1_Resnet50
-from models.tiny_yolov1net import Tiny_YoloV1
-from models.tiny_yolov1net_mobilenetv3_large import Tiny_YoloV1_MobileNetV3_Large
-from models.tiny_yolov1net_mobilenetv3_small import Tiny_YoloV1_MobileNetV3_Small
-from models.tiny_yolov1net_squeezenet import Tiny_YoloV1_SqueezeNet
+from torch.optim.lr_scheduler import LambdaLR
+from models.yolov1_resnet18 import YoloV1_Resnet18
+from models.yolov1_mamba import YoloV1_Mamba
 
-import cv2 as cv
-import numpy as np 
-from numpy import genfromtxt
+from utils.yolov1_utils import get_bboxes, mean_average_precision as mAP
+from data import VOCDataset
+
 
 device = "cuda"
 batch_size = 64
-weight_decay = 0.0005
+weight_decay = 5e-4
 epochs = 140
 nworkers = 14 # Supposedly faster: https://chtalhaanwar.medium.com/pytorch-num-workers-a-tip-for-speedy-training-ed127d825db7
-pin_memory = True
 eval_interval = 10
-
-# to resume training from a previous checkpoint set to True
-continue_training = True
-
-img_dir = 'data/images/'
-label_dir = 'data/labels/'
-lr_sched_original = False
-lr_sched_adjusted = True
-use_vgg19bn_backbone = False
-use_original_darknet_backbone = False
-use_resnet18_backbone = True
-use_resnet50_backbone = False
-use_tiny_backbone = False
-use_mobilenetv3_large_backbone = False
-use_mobilenetv3_small_backbone = False
-use_squeezenet_backbone = False
-check_image_transform = False
 save_model = True
 
-model_names = ['vgg19bn_orig_lr_', 
-                'vgg19bn_adj_lr_',
-                'resnet18_adj_lr_',
-                'resnet50_adj_lr_',
-                'tiny_adj_lr_',
-                'mobilenetv3_large_tiny_adj_lr_',
-                'mobilenetv3_small_tiny_adj_lr_',
-                'squeezenet_tiny_adj_lr_']
+# Select Model
+use_resnet18_backbone = True
+use_mamba_backbone = False
 
-if lr_sched_original == True and use_vgg19bn_backbone == True:
-    lr = 0.001
-    current_model = model_names[0]
-    path_cpt_file = f'cpts/{current_model}yolov1.cpt'
-elif lr_sched_adjusted == True and use_vgg19bn_backbone == True:
-    lr =  0.00001
-    current_model = model_names[1]
-    path_cpt_file = f'cpts/{current_model}yolov1.cpt'
-elif lr_sched_adjusted == True and use_resnet18_backbone == True:
-    lr =  0.00001
-    current_model = model_names[2]
-    path_cpt_file = f'cpts/{current_model}yolov1.cpt'
-elif lr_sched_adjusted == True and use_resnet50_backbone == True:
-    lr =  0.00001
-    current_model = model_names[3]
-    path_cpt_file = f'cpts/{current_model}yolov1.cpt'
-elif lr_sched_adjusted == True and use_tiny_backbone == True:
-    lr =  0.00001
-    current_model = model_names[4]
-    path_cpt_file = f'cpts/{current_model}yolov1.cpt'
-elif lr_sched_adjusted == True and use_mobilenetv3_large_backbone == True:
-    lr =  0.00001
-    current_model = model_names[5]
-    path_cpt_file = f'cpts/{current_model}yolov1.cpt'
-elif lr_sched_adjusted == True and use_mobilenetv3_small_backbone == True:
-    lr =  0.00001
-    current_model = model_names[6]
-    path_cpt_file = f'cpts/{current_model}yolov1.cpt'
-elif lr_sched_adjusted == True and use_squeezenet_backbone == True:
-    lr =  0.00001
-    current_model = model_names[7]
-    path_cpt_file = f'cpts/{current_model}yolov1.cpt'
+# Train
 
-class Compose(object):
-    def __init__(self, transforms):
-        self.transforms = transforms
-        
-    def __call__(self, img, bboxes):
-        for t in self.transforms:
-            img, bboxes = t(img), bboxes
-        return img, bboxes
-    
-train_transform = Compose([T.Resize((448, 448)),
-            T.ColorJitter(brightness=[0,1.5], saturation=[0,1.5]),
-            T.ToTensor()])
-
-test_transform = Compose([T.Resize((448, 448)),
-            T.ToTensor()])
-
-def train (train_loader, model, optimizer, loss_f):
+def train(train_loader, model, optimizer, loss_fn):
     """
     Input: train loader (torch loader), model (torch model), optimizer (torch optimizer)
           loss function (torch custom yolov1 loss).
@@ -116,203 +37,138 @@ def train (train_loader, model, optimizer, loss_f):
     accum_iter = 16
     model.train()
 
-    loss = 0.0
+    total_loss = 0.0
     for batch_idx, (x, y) in enumerate(train_loader):
         x, y = x.to(device), y.to(device)
         
         with torch.set_grad_enabled(True):
             out = model(x)
-            del x
-            loss_val = loss_f(out, y)
-            # Maybe we need to divide loss by accum_iter. I however doubt this
-            # since loss is computed within each batch, so this correction is
-            # not needed. 
-            # loss_val = loss_val 
-            del y
-            del out
+            loss = loss_fn(out, y)
             
-            loss_val.backward()
-            loss += loss_val.item()
+            loss.backward()
+            total_loss += loss.item()
             
             if ((batch_idx + 1) % accum_iter == 0) or (batch_idx + 1 == len(train_loader)):
                 optimizer.step()
                 optimizer.zero_grad()
 
-    return float(loss / len(train_loader))
+    return total_loss / len(train_loader)
     
-def test (test_loader, model, loss_f):
+def val(val_loader, model, loss_fn):
     """
-    Input: test loader (torch loader), model (torch model), loss function 
+    Input: val loader (torch loader), model (torch model), loss function 
           (torch custom yolov1 loss).
-    Output: test loss (torch float).
+    Output: val loss (torch float).
     """
     model.eval()
+
     with torch.no_grad():
-        for batch_idx, (x, y) in enumerate(test_loader):
+        total_loss = 0.0
+        for batch_idx, (x, y) in enumerate(val_loader):
             x, y = x.to(device), y.to(device)
             out = model(x)
-            del x
-            test_loss_val = loss_f(out, y)
-            del y
-            del out
+            loss = loss_fn(out, y)
+            total_loss += loss
 
-        return(float(test_loss_val))
+        return total_loss / len(val_loader)
 
 def main():
-
-    if use_original_darknet_backbone == True:
-        model = YoloV1Net(S = 7, B = 2, C = 20).to(device)
-        print("Untrained darknet network initalized as a backbone.")
-        print("Note: This is the original backbone from the YoloV1 paper. PyTorch weights are not available.")
-        print("This backbone requieres pre-training on ImageNet to obtain compareable performance to other backbones.")
-    
-    elif use_vgg19bn_backbone == True:
-        model = YoloV1_Vgg19bn(S = 7, B = 2, C = 20).to(device)
-        print("Petrained vgg 19 network with batch normalization initalized as a backbone.")
-
-    elif use_resnet18_backbone == True:
-        model = YoloV1_Resnet18(S = 7, B = 2, C = 20).to(device)
-        print("Petrained resnet 18 network initalized as a backbone.")
-
-    elif use_resnet50_backbone == True:
-        model = YoloV1_Resnet50(S = 7, B = 2, C = 20).to(device)
-        print("Petrained resnet 50 network initalized as a backbone.")
-    
-    elif use_tiny_backbone == True:
-        model = Tiny_YoloV1(S = 7, B = 2, C = 20).to(device)
-        print("Untrained tiny yolov1 network initalized as a backbone.")
-
-    elif use_mobilenetv3_large_backbone == True:
-        model = Tiny_YoloV1_MobileNetV3_Large(S = 7, B = 2, C = 20).to(device)
-        print("Pretrained mobilenet v3 large network initalized as a backbone.")
-    
-    elif use_mobilenetv3_small_backbone == True:
-        model = Tiny_YoloV1_MobileNetV3_Small(S = 7, B = 2, C = 20).to(device)
-        print("Pretrained mobilenet v3 small network initalized as a backbone.")
-    
-    elif use_squeezenet_backbone == True:
-        model = Tiny_YoloV1_SqueezeNet(S = 7, B = 2, C = 20).to(device)
-        print("Pretrained squeezenet network initalized as a backbone.")
-    
+    # Select model
+    if use_mamba_backbone:
+        lr = 1e-5
+        current_model = "mamba"
+        model = YoloV1_Mamba(S=7, B=2, C=20).to(device)
+    elif use_resnet18_backbone:
+        lr =  1e-5
+        current_model = "resnet18"
+        model = YoloV1_Resnet18(S=7, B=2, C=20).to(device)
     else:
-        print("No backbone was specified. Please check the boolean flags in train_yolov1.py and set the flag for supported backbones to True.")
+        print("No backbone was specified")
+        return 1
+
+    ckpt_path = f"checkpoints/{current_model}/yolov1.pth"
+    metric_path = f"metrics/{current_model}/metrics.pth"
     
-    optimizer = optim.Adam(model.parameters(), lr = lr, weight_decay = weight_decay)
-    loss_f = YoloV1Loss()
+    # Load training settings and metrics
+    optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay = weight_decay)
+    loss_fn = YoloV1Loss()
 
     train_loss_lst = []
     train_mAP_lst = []
-    test_mAP_lst = []
-    test_loss_lst = []
+    val_mAP_lst = []
+    val_loss_lst = []
     last_epoch = 0
-    
-    if continue_training == True:
-        checkpoint = torch.load(path_cpt_file)
-        model.load_state_dict(checkpoint['model_state_dict'])
-        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        last_epoch = checkpoint['epoch']
+
+    if os.path.exists(ckpt_path):
+        checkpoint = torch.load(ckpt_path)
+        model.load_state_dict(checkpoint["model_state_dict"])
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+        last_epoch = checkpoint["epoch"]
         print(f"Checkpoint from epoch:{last_epoch + 1} successfully loaded.")
-        
-        strip_square_brackets(f"results/{current_model}train_loss.txt")
-        # strip_square_brackets(f"results/{current_model}train_mAP.txt")
-        strip_square_brackets(f"results/{current_model}test_loss.txt")
-        # strip_square_brackets(f"results/{current_model}test_mAP.txt")
 
-        train_loss_lst = list(genfromtxt(f"results/{current_model}train_loss.txt", delimiter=','))
-        # train_mAP_lst = list(genfromtxt(f"results/{current_model}train_mAP.txt", delimiter=','))
-        test_loss_lst = list(genfromtxt(f"results/{current_model}test_loss.txt", delimiter=','))
-        # test_mAP_lst = list(genfromtxt(f"results/{current_model}test_mAP.txt", delimiter=','))
+    if os.path.exists(metric_path):
+        m = torch.load(metric_path)
+        train_loss_lst = m["train_losses"]
+        train_mAP_lst = m["train_mAP"]
+        val_loss_lst = m["val_losses"]
+        val_mAP_lst = m["val_mAP"]
 
-    train_dataset = VOCData(csv_file = 'data/train.csv',
-                            img_dir = img_dir, label_dir = label_dir, 
-                            transform = train_transform, transform_scale_translate = True)
-    
-    test_dataset = VOCData(csv_file = 'data/test.csv',
-                            img_dir = img_dir, label_dir = label_dir, 
-                            transform = test_transform, transform_scale_translate = False)
-    
-    train_loader = DataLoader(dataset = train_dataset, batch_size = batch_size, 
-                              num_workers = nworkers, shuffle = True)
-    
-    test_loader = DataLoader(dataset = test_dataset, batch_size = batch_size, 
-                              num_workers = nworkers, shuffle = True)
 
-    for epoch in range(epochs - last_epoch):
-        torch.cuda.empty_cache()
-        # learning rate scheduler
-        # 1. something like the orginal learning rate from the YoloV1 paper
-        # results are terrible
-        if lr_sched_original == True:
-            for g in optimizer.param_groups:
-                # 1. linear increase from 0.001 (10^-3) to 0.01 (10^-2) over 5 epochs
-                if epoch + last_epoch > 0 and epoch + last_epoch <= 5:
-                    g['lr'] = 0.001 + 0.0018 * epoch
-                # train at 0.01 for 75 epochs 
-                if epoch + last_epoch <=80 and epoch + last_epoch > 5:
-                    g['lr'] = 0.01
-                # train at 0.001 for 30 epochs
-                if epoch + last_epoch <= 110 and epoch + last_epoch > 80:
-                    g['lr'] = 0.001
-                # continue training until done
-                if epoch + last_epoch > 110:
-                    g['lr'] = 0.00001
+    def lr_lambda(epoch):
+        if epoch <= 5: return 1 + 9 * (epoch / 5)     # linearly from 1× to 10×
+        elif epoch <= 80: return 10                   # constant 10×
+        elif epoch <= 110: return 1                   # back to 1×
+        else: return 0.1                              # decay to 0.1×
+    scheduler = LambdaLR(optimizer, lr_lambda=lr_lambda, last_epoch=last_epoch if last_epoch > 0 else -1)
 
-        if lr_sched_adjusted == True:
-             for g in optimizer.param_groups:
-                # 1. linear increase from 0.00001 to 0.0001 over 5 epochs
-                if epoch + last_epoch > 0 and epoch + last_epoch <= 5:
-                    g['lr'] = 0.00001 +(0.00009/5) * (epoch + last_epoch)
-                # train at  0.0001 for 75 epochs 
-                if epoch + last_epoch <=80 and epoch + last_epoch > 5:
-                    g['lr'] = 0.0001
-                # train at 0.00001 for 30 epochs
-                if epoch + last_epoch <= 110 and epoch + last_epoch > 80:
-                    g['lr'] = 0.00001
-                # train until done
-                if epoch + last_epoch > 110:
-                    g['lr'] = 0.000001
+    # Dataset
+    train_ds = VOCDataset("train")
+    val_ds = VOCDataset("val")
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, collate_fn=lambda b: tuple(zip(*b)))
+    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, collate_fn=lambda b: tuple(zip(*b)))
 
+    for epoch in tqdm(range(last_epoch, epochs)):
         # for training data
         pred_bbox, target_bbox = get_bboxes(train_loader, model, iou_threshold = 0.5, 
-                                          threshold = 0.4)
+                                        threshold = 0.4)
 
-        test_pred_bbox, test_target_bbox = get_bboxes(test_loader, model, iou_threshold = 0.5, 
-                                          threshold = 0.4)                                
+        val_pred_bbox, val_target_bbox = get_bboxes(val_loader, model, iou_threshold = 0.5, 
+                                        threshold = 0.4)                                
         
-        # Train and Test Loss
-        train_loss_value = train(train_loader, model, optimizer, loss_f)
+        # Train and val Loss
+        train_loss_value = train(train_loader, model, optimizer, loss_fn)
         train_loss_lst.append(train_loss_value)
-        test_loss_value = test(test_loader, model, loss_f)
-        test_loss_lst.append(test_loss_value)
+        val_loss_value = val(val_loader, model, loss_fn)
+        val_loss_lst.append(val_loss_value)
 
         print(f"Learning Rate:", optimizer.param_groups[0]["lr"])
-        print(f"Epoch:{epoch + last_epoch + 1 } Train[Loss:{train_loss_value} Test[Loss:{test_loss_value}")
+        print(f"Epoch:{epoch + last_epoch + 1 } Train[Loss:{train_loss_value} Val[Loss:{val_loss_value}")
 
         # store mAP and average mAP
         if epoch > 0 and (epoch + 1) % eval_interval == 0:
             train_mAP_val = mAP(pred_bbox, target_bbox, iou_threshold = 0.5, boxformat="midpoints")
-            test_mAP_val = mAP(test_pred_bbox, test_target_bbox, iou_threshold = 0.5, boxformat="midpoints")
+            val_mAP_val = mAP(val_pred_bbox, val_target_bbox, iou_threshold = 0.5, boxformat="midpoints")
             train_mAP_lst.append(train_mAP_val.item())
-            test_mAP_lst.append(test_mAP_val.item())
-            print(f"Train mAP:{train_mAP_val}] Test mAP:{test_mAP_val}]")
+            val_mAP_lst.append(val_mAP_val.item())
+            print(f"Train mAP:{train_mAP_val}] val mAP:{val_mAP_val}]")
 
-  
+
         if save_model == True and ( (epoch + last_epoch + 1 ) % 2) == 0 or epoch + last_epoch == epochs - 1 :
             torch.save({
-                'epoch': epoch + last_epoch,
-                'model_state_dict': model.state_dict(),
-                'optimizer_state_dict': optimizer.state_dict()
-                }, path_cpt_file)
+                "epoch": epoch + last_epoch,
+                "model_state_dict": model.state_dict(),
+                "optimizer_state_dict": optimizer.state_dict()
+                }, ckpt_path)
             print(f"Checkpoint at {epoch + last_epoch + 1} stored")
-            with open(f'results/{current_model}train_loss.txt','w') as values:
+            with open(f"results/{current_model}train_loss.txt","w") as values:
                 values.write(str(train_loss_lst))
-            with open(f'results/{current_model}train_mAP.txt','w') as values:
+            with open(f"results/{current_model}train_mAP.txt","w") as values:
                 values.write(str(train_mAP_lst))
-            with open(f'results/{current_model}test_loss.txt','w') as values:
-                values.write(str(test_loss_lst))
-            with open(f'results/{current_model}test_mAP.txt','w') as values:
-                values.write(str(test_mAP_lst))
-        
+            with open(f"results/{current_model}val_loss.txt","w") as values:
+                values.write(str(val_loss_lst))
+            with open(f"results/{current_model}val_mAP.txt","w") as values:
+                values.write(str(val_mAP_lst))
+    
             
 if __name__ == "__main__":
     main()

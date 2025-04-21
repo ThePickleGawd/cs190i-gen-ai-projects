@@ -1,3 +1,6 @@
+# YoMAMBA
+
+Yo MAMBA so fat, she crushed every benchmark in YOLOv1.
 
 # Setup
 

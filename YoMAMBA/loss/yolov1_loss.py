@@ -13,6 +13,8 @@ class YoloV1Loss(nn.Module):
 
     def forward(self, preds, target):
         mse_loss = nn.MSELoss(reduction="sum")
+        ce_loss = nn.CrossEntropyLoss(reduction="sum")
+
         # reshape predictions to S by S by 30
         preds = preds.reshape(-1, self.S, self.S, self.C + self.B * 5)
         # extract 4 bounding box values for bounding box 1 and box 2
@@ -23,7 +25,7 @@ class YoloV1Loss(nn.Module):
         # Determine if an object is in cell i using identity
         identity_obj_i = target[...,20].unsqueeze(3) 
 
-        # 1. Bouding Box Loss Component 
+        ## 1. Bouding Box Loss 
         boxpreds = identity_obj_i * (
             (
                 bestbox * preds[...,26:30] 
@@ -44,7 +46,7 @@ class YoloV1Loss(nn.Module):
                            torch.flatten(boxtargets, end_dim = -2)
         )
         
-        # 2. Object Loss Component
+        ## 2. Object Confidence Loss
         # has shape N by S by S
 
         predbox = (
@@ -58,7 +60,7 @@ class YoloV1Loss(nn.Module):
         )
         
         
-        # 3. No Object Loss Component 
+        ## 3. No Object Confidence Loss
         no_objloss = mse_loss(
             torch.flatten((1 - identity_obj_i) * preds[...,20:21], start_dim = 1),
             torch.flatten((1 - identity_obj_i) * target[...,20:21], start_dim = 1)
@@ -69,17 +71,22 @@ class YoloV1Loss(nn.Module):
             torch.flatten((1 - identity_obj_i) * target[...,20:21], start_dim = 1)
             )
         
-        # 4. Class Loss Component 
-        classloss = mse_loss(
-            torch.flatten(identity_obj_i * preds[...,:20], end_dim = -2),
-            torch.flatten(identity_obj_i * target[...,:20], end_dim = -2)
-            )
+        ## 4. Classification Loss
+
+        # Get only the grid cells with objects
+        has_obj = identity_obj_i.squeeze(-1) > 0  # shape: (N, S, S)
+
+        # Select predictions and target class indices where objects exist
+        pred_classes = preds[...,:20][has_obj]  # (num_obj, C)
+        target_classes = target[...,:20][has_obj].argmax(dim=-1)  # (num_obj,)
+
+        classloss = ce_loss(pred_classes, target_classes)
         
-        # 5. Combine Loss Components 
+        ## 5. Combine Losses 
         loss = (
             self.lambda_obj * boxloss
             + objloss
             + self.lambda_no_obj * no_objloss
             + classloss)
 
-        return loss
+        return loss / preds.shape[0]

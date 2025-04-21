@@ -84,8 +84,8 @@ class VOCDataset(Dataset):
             y_cell_tl = y_cell * int(y_cell_size)
             x = (x_center - x_cell_tl) / x_cell_size
             y = (y_center - y_cell_tl) / y_cell_size
-            w = (xmax - xmin) / config.IMG_SIZE[0]
-            h = (ymax - ymin) / config.IMG_SIZE[1]
+            w = (xmax - xmin) / x_cell_size
+            h = (ymax - ymin) / y_cell_size
 
             # Construct label
             bbox = torch.tensor([x, y, w, h, 1.0])

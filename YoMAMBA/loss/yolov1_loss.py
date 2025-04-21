@@ -45,15 +45,17 @@ class YoloV1Loss(nn.Module):
             torch.flatten(identity_obj_i * target[..., 24:25])
         )
 
+        # Confidence Loss
         no_objloss = mse_loss(
             torch.flatten((1 - identity_obj_i) * preds[..., 24:25], start_dim=1),
             torch.flatten((1 - identity_obj_i) * target[..., 24:25], start_dim=1)
         )
         no_objloss += mse_loss(
             torch.flatten((1 - identity_obj_i) * preds[..., 29:30], start_dim=1),
-            torch.flatten((1 - identity_obj_i) * target[..., 24:25], start_dim=1)
+            torch.flatten((1 - identity_obj_i) * target[..., 24:25], start_dim=1) # One target per box
         )
 
+        # Classification loss
         classloss = mse_loss(
             torch.flatten(identity_obj_i * preds[..., :20], end_dim=-2),
             torch.flatten(identity_obj_i * target[..., :20], end_dim=-2)

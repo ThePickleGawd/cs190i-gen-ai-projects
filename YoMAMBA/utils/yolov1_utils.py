@@ -179,6 +179,30 @@ def get_bboxes(loader, model, iou_threshold, threshold, pred_format="cells", box
         with torch.no_grad():
             predictions = model(x)
 
+        ### START AUGMENT
+        # print("Warning: Augmentation output order for test")
+
+        # # Assuming predictions shape: (N, S, S, C + 5*B)
+        # N, S, B, C = 64, 7, 2, 20  # example values; replace with actual config if needed
+
+        # # Reshape to separate class and box predictions
+        # predictions = predictions.view(N, S, S, C + 5 * B)
+        # class_preds = predictions[..., :C]
+        # box_preds = predictions[..., C:]  # shape: (N, S, S, 5*B)
+
+        # # Reshape box_preds to (N, S, S, B, 5)
+        # box_preds = box_preds.view(N, S, S, B, 5)
+
+        # # Reorder box outputs from (conf, x, y, w, h) → (x, y, w, h, conf)
+        # box_preds = box_preds[..., [1, 2, 3, 4, 0]]
+
+        # # Flatten back to (N, S, S, 5*B)
+        # box_preds = box_preds.view(N, S, S, 5 * B)
+
+        # # Concatenate class and box predictions back
+        # predictions = torch.cat((class_preds, box_preds), dim=-1)
+        ### END AUGMENT
+
         batch_size = x.shape[0]
         true_bboxes = cellboxes_to_boxes(labels)
         bboxes = cellboxes_to_boxes(predictions)
@@ -213,7 +237,7 @@ def convert_cellboxes(predictions, S=7):
     predictions = predictions.reshape(batch_size, 7, 7, 30)
     bboxes1 = predictions[..., 20:24]
     bboxes2 = predictions[..., 25:29]
-    scores = torch.cat( (predictions[..., 21].unsqueeze(0), predictions[..., 24].unsqueeze(0)), dim=0 )
+    scores = torch.cat( (predictions[..., 24].unsqueeze(0), predictions[..., 29].unsqueeze(0)), dim=0 )
     best_box = scores.argmax(0).unsqueeze(-1)
     best_boxes = bboxes1 * (1 - best_box) + best_box * bboxes2
     cell_indices = torch.arange(7).repeat(batch_size, 7, 1).unsqueeze(-1)
@@ -222,7 +246,7 @@ def convert_cellboxes(predictions, S=7):
     w_y = 1 / S * best_boxes[..., 2:4]
     converted_bboxes = torch.cat((x, y, w_y), dim=-1)
     predicted_class = predictions[..., :20].argmax(-1).unsqueeze(-1)
-    best_confidence = torch.max(predictions[..., 20], predictions[..., 24]).unsqueeze(-1)
+    best_confidence = torch.max(predictions[..., 24], predictions[..., 29]).unsqueeze(-1)
     converted_preds = torch.cat( (predicted_class, best_confidence, converted_bboxes), dim=-1 )
 
     return converted_preds
@@ -230,7 +254,7 @@ def convert_cellboxes(predictions, S=7):
 
 def cellboxes_to_boxes(out, S=7):
     converted_pred = convert_cellboxes(out).reshape(out.shape[0], S * S, -1)
-    converted_pred[..., 0] = converted_pred[..., 0].long()
+    converted_pred[..., 0] = converted_pred[..., 0].long() # 0 is class pred
     all_bboxes = []
 
     for ex_idx in range(out.shape[0]):
@@ -248,7 +272,7 @@ def non_max_suppression(bboxes, iou_threshold, threshold, boxformat="corners"):
     Does Non Max Suppression given bboxes.
     Parameters:
         bboxes (list): list of lists containing all bboxes with each bboxes
-        specified as [class_pred, prob_score, x1, y1, x2, y2]
+            specified as [class_pred, prob_score, x1, y1, x2, y2]
         iou_threshold (float): threshold where predicted bboxes is correct
         threshold (float): threshold to remove predicted bboxes (independent of IoU) 
         box_format (str): "midpoint" or "corners" used to specify bboxes
@@ -386,18 +410,3 @@ def mean_average_precision(
         average_precisions.append(torch.trapz(precisions, recalls))
 
     return sum(average_precisions) / len(average_precisions)
-
-def cellboxes_to_boxes(out, S=7):
-    converted_pred = convert_cellboxes(out).reshape(out.shape[0], S * S, -1)
-    converted_pred[..., 0] = converted_pred[..., 0].long()
-    all_bboxes = []
-
-    for ex_idx in range(out.shape[0]):
-        bboxes = []
-
-        for bbox_idx in range(S * S):
-            bboxes.append([x.item() for x in converted_pred[ex_idx, bbox_idx, :]])
-        all_bboxes.append(bboxes)
-
-    return all_bboxes
-

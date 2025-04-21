@@ -1,1 +1,145 @@
 Using pretrained resnet18, layer4 unfrozen.
+Epoch 1 | LR: 2.80e-05 | Train Loss: 744.6667 (197.20s)
+Saved last model and metrics
+Epoch 2 | LR: 4.60e-05 | Train Loss: 552.5490 (192.93s)
+Saved last model and metrics
+Epoch 3 | LR: 6.40e-05 | Train Loss: 492.9267 (156.76s)
+Saved last model and metrics
+Epoch 4 | LR: 8.20e-05 | Train Loss: 475.8382 (214.90s)
+Saved last model and metrics
+Epoch 5 | LR: 1.00e-04 | Train Loss: 492.8239 (205.25s)
+Saved last model and metrics
+Epoch 6 | LR: 1.00e-04 | Train Loss: 1339.8579 (194.71s)
+Saved last model and metrics
+Epoch 7 | LR: 1.00e-04 | Train Loss: 589.6701 (199.31s)
+Saved last model and metrics
+Epoch 8 | LR: 1.00e-04 | Train Loss: 477.5356 (203.68s)
+Saved last model and metrics
+Epoch 9 | LR: 1.00e-04 | Train Loss: 459.9681 (201.19s)
+Saved last model and metrics
+Epoch 10 | LR: 1.00e-04 | Train Loss: 456.5691 (196.35s)
+Val Loss: 373.6479 (105.66s) | Train mAP: 0.0000 | Val mAP: 0.0000
+Saved last model and metrics
+Checkpoint at 10 stored
+Epoch 11 | LR: 1.00e-04 | Train Loss: 441.3031 (236.01s)
+Saved last model and metrics
+Epoch 12 | LR: 1.00e-04 | Train Loss: 421.4810 (219.75s)
+Saved last model and metrics
+Epoch 13 | LR: 1.00e-04 | Train Loss: 794.2025 (204.05s)
+Saved last model and metrics
+Epoch 14 | LR: 1.00e-04 | Train Loss: 516.7393 (217.87s)
+Saved last model and metrics
+Epoch 15 | LR: 1.00e-04 | Train Loss: 487.1028 (217.51s)
+Saved last model and metrics
+Epoch 16 | LR: 1.00e-04 | Train Loss: 443.5039 (197.97s)
+Saved last model and metrics
+Epoch 17 | LR: 1.00e-04 | Train Loss: 446.8237 (201.16s)
+Saved last model and metrics
+Epoch 18 | LR: 1.00e-04 | Train Loss: 429.6572 (219.98s)
+Saved last model and metrics
+Epoch 19 | LR: 1.00e-04 | Train Loss: 407.5832 (205.43s)
+Saved last model and metrics
+Epoch 20 | LR: 1.00e-04 | Train Loss: 392.1220 (216.97s)
+Val Loss: 334.4869 (126.33s) | Train mAP: 0.0000 | Val mAP: 0.0000
+Saved last model and metrics
+Checkpoint at 20 stored
+Epoch 21 | LR: 1.00e-04 | Train Loss: 380.7488 (216.71s)
+Saved last model and metrics
+Epoch 22 | LR: 1.00e-04 | Train Loss: 380.8313 (198.21s)
+Saved last model and metrics
+Epoch 23 | LR: 1.00e-04 | Train Loss: 373.7275 (209.71s)
+Saved last model and metrics
+Epoch 24 | LR: 1.00e-04 | Train Loss: 370.0427 (215.43s)
+Saved last model and metrics
+Epoch 25 | LR: 1.00e-04 | Train Loss: 382.7968 (203.01s)
+Saved last model and metrics
+Epoch 26 | LR: 1.00e-04 | Train Loss: 373.0795 (207.93s)
+Saved last model and metrics
+Epoch 27 | LR: 1.00e-04 | Train Loss: 372.4755 (213.30s)
+Saved last model and metrics
+Epoch 28 | LR: 1.00e-04 | Train Loss: 368.9762 (204.53s)
+Saved last model and metrics
+Epoch 29 | LR: 1.00e-04 | Train Loss: 358.8141 (204.56s)
+Saved last model and metrics
+Epoch 30 | LR: 1.00e-04 | Train Loss: 353.0829 (221.74s)
+Val Loss: 306.1751 (106.66s) | Train mAP: 0.0000 | Val mAP: 0.0000
+Saved last model and metrics
+Checkpoint at 30 stored
+Epoch 31 | LR: 1.00e-04 | Train Loss: 347.3653 (215.44s)
+Saved last model and metrics
+Epoch 32 | LR: 1.00e-04 | Train Loss: 347.3811 (197.35s)
+Saved last model and metrics
+Epoch 33 | LR: 1.00e-04 | Train Loss: 349.4624 (199.79s)
+Saved last model and metrics
+Epoch 34 | LR: 1.00e-04 | Train Loss: 371.3786 (202.61s)
+Saved last model and metrics
+Epoch 35 | LR: 1.00e-04 | Train Loss: 345.8057 (216.87s)
+Saved last model and metrics
+Epoch 36 | LR: 1.00e-04 | Train Loss: 336.3462 (205.94s)
+Saved last model and metrics
+Epoch 37 | LR: 1.00e-04 | Train Loss: 321.3997 (201.04s)
+Saved last model and metrics
+Epoch 38 | LR: 1.00e-04 | Train Loss: 309.1656 (203.84s)
+Saved last model and metrics
+Epoch 39 | LR: 1.00e-04 | Train Loss: 305.3227 (200.37s)
+Saved last model and metrics
+Epoch 40 | LR: 1.00e-04 | Train Loss: 304.0739 (210.28s)
+Val Loss: 284.3027 (96.80s) | Train mAP: 0.0000 | Val mAP: 0.0000
+Saved last model and metrics
+Checkpoint at 40 stored
+Epoch 41 | LR: 1.00e-04 | Train Loss: 301.4446 (189.78s)
+Saved last model and metrics
+Epoch 42 | LR: 1.00e-04 | Train Loss: 310.3256 (199.91s)
+Saved last model and metrics
+Epoch 43 | LR: 1.00e-04 | Train Loss: 301.1146 (197.86s)
+Saved last model and metrics
+Epoch 44 | LR: 1.00e-04 | Train Loss: 299.5356 (203.31s)
+Saved last model and metrics
+Epoch 45 | LR: 1.00e-04 | Train Loss: 288.0234 (200.36s)
+Saved last model and metrics
+Epoch 46 | LR: 1.00e-04 | Train Loss: 286.4631 (211.14s)
+Saved last model and metrics
+Epoch 47 | LR: 1.00e-04 | Train Loss: 280.9111 (189.90s)
+Saved last model and metrics
+Epoch 48 | LR: 1.00e-04 | Train Loss: 285.5930 (210.54s)
+Saved last model and metrics
+Epoch 49 | LR: 1.00e-04 | Train Loss: 285.1512 (202.90s)
+Saved last model and metrics
+Epoch 50 | LR: 1.00e-04 | Train Loss: 288.5787 (207.52s)
+Val Loss: 315.8139 (107.18s) | Train mAP: 0.0000 | Val mAP: 0.0000
+Saved last model and metrics
+Checkpoint at 50 stored
+Epoch 51 | LR: 1.00e-04 | Train Loss: 289.4549 (213.57s)
+Saved last model and metrics
+Epoch 52 | LR: 1.00e-04 | Train Loss: 277.5182 (219.88s)
+Saved last model and metrics
+Epoch 53 | LR: 1.00e-04 | Train Loss: 283.1466 (199.81s)
+Saved last model and metrics
+Epoch 54 | LR: 1.00e-04 | Train Loss: 285.0351 (218.30s)
+Saved last model and metrics
+Epoch 55 | LR: 1.00e-04 | Train Loss: 280.2664 (199.21s)
+Saved last model and metrics
+Epoch 56 | LR: 1.00e-04 | Train Loss: 266.9209 (201.01s)
+Saved last model and metrics
+Epoch 57 | LR: 1.00e-04 | Train Loss: 257.3778 (211.56s)
+Saved last model and metrics
+Epoch 58 | LR: 1.00e-04 | Train Loss: 253.7239 (199.38s)
+Saved last model and metrics
+Epoch 59 | LR: 1.00e-04 | Train Loss: 248.5289 (190.65s)
+Saved last model and metrics
+Epoch 60 | LR: 1.00e-04 | Train Loss: 244.4907 (192.22s)
+Val Loss: 261.2443 (98.77s) | Train mAP: 0.0000 | Val mAP: 0.0000
+Saved last model and metrics
+Checkpoint at 60 stored
+Epoch 61 | LR: 1.00e-04 | Train Loss: 240.2484 (208.83s)
+Saved last model and metrics
+Epoch 62 | LR: 1.00e-04 | Train Loss: 239.2275 (218.44s)
+Saved last model and metrics
+Epoch 63 | LR: 1.00e-04 | Train Loss: 236.5083 (208.81s)
+Saved last model and metrics
+Epoch 64 | LR: 1.00e-04 | Train Loss: 231.5113 (219.20s)
+Saved last model and metrics
+Epoch 65 | LR: 1.00e-04 | Train Loss: 228.5915 (206.98s)
+Saved last model and metrics
+Epoch 66 | LR: 1.00e-04 | Train Loss: 228.3419 (199.94s)
+Saved last model and metrics

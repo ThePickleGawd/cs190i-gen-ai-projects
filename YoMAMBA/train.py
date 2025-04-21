@@ -96,9 +96,12 @@ def main():
         print("No backbone was specified")
         return 1
 
-    ckpt_dir = f"checkpoints/{current_model}/"
+    ckpt_dir = f"checkpoints/{current_model}"
+    metric_dir = f"metrics/{current_model}"
+    os.makedirs(ckpt_dir, exist_ok=True)
+    os.makedirs(metric_dir, exist_ok=True)
     ckpt_path = f"{ckpt_dir}/yolov1.pth"
-    metric_path = f"metrics/{current_model}/metrics.pth"
+    metric_path = f"{metric_dir}/metrics.pth"
     
     # Load training settings and metrics
     optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay = weight_decay)
@@ -140,8 +143,8 @@ def main():
 
     train_ds = VOCDataset("train")
     val_ds = VOCDataset("val")
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
-    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, collate_fn=collate_fn)
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, collate_fn=collate_fn, drop_last=True)
+    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, collate_fn=collate_fn, drop_last=True)
 
     for epoch in range(last_epoch, epochs):
         
@@ -157,10 +160,10 @@ def main():
 
         # Evaluate: Val loss, train mAP, val mAP
         if epoch > 0 and (epoch + 1) % eval_interval == 0:
-            pred_bbox, target_bbox = get_bboxes(train_loader, model, iou_threshold = 0.5, threshold = 0.4)
-            val_pred_bbox, val_target_bbox = get_bboxes(val_loader, model, iou_threshold = 0.5, threshold = 0.4)                                
             val_loss_value, val_time = val(val_loader, model, loss_fn, epoch)
             val_loss_list.append(val_loss_value)
+            pred_bbox, target_bbox = get_bboxes(train_loader, model, iou_threshold = 0.5, threshold = 0.4)
+            val_pred_bbox, val_target_bbox = get_bboxes(val_loader, model, iou_threshold = 0.5, threshold = 0.4)                                
             train_mAP_val = mAP(pred_bbox, target_bbox, iou_threshold = 0.5, boxformat="midpoints")
             val_mAP_val = mAP(val_pred_bbox, val_target_bbox, iou_threshold = 0.5, boxformat="midpoints")
             train_mAP_list.append(train_mAP_val.item())

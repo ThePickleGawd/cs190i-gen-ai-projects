@@ -1,11 +1,11 @@
 #!/bin/bash
 # ========================================
-# Script: train_YOLOv1ResNet.sh
-# Description: Train YOLOv1 with ResNet backbone
-# Usage: bash train_YOLOv1ResNet.sh
+# Script: train_YOLOv2ResNet.sh
+# Description: Train YOLOv2 with ResNet backbone
+# Usage: bash train_YOLOv2ResNet.sh
 # ========================================
 
-MODEL="YOLOv1ResNet"
+MODEL="YOLOv2ResNet"
 BATCH=64
 LR=1e-4
 EPOCHS=120

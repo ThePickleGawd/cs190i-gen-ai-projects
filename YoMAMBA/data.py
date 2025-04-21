@@ -72,8 +72,8 @@ class VOCDataset(Dataset):
             one_hot[class_idx] = 1
 
             # Find cell to insert into
-            x_center = (xmin + xmax) / 2
-            y_center = (ymin + ymax) / 2
+            x_center = (xmin + xmax) / 2.0
+            y_center = (ymin + ymax) / 2.0
             x_cell_size = config.IMG_SIZE[0] / config.S
             y_cell_size = config.IMG_SIZE[1] / config.S
             x_cell = min(int(x_center // x_cell_size), config.S - 1)
@@ -88,7 +88,7 @@ class VOCDataset(Dataset):
             h = (ymax - ymin) / y_cell_size
 
             # Construct label
-            bbox = torch.tensor([x, y, w, h, 1.0])
+            bbox = torch.tensor([1.0, x, y, w, h])
             empty = torch.tensor([0, 0, 0, 0, 0])
             label_vector = torch.concat([one_hot, bbox, empty])
 

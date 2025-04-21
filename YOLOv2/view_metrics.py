@@ -4,7 +4,7 @@ import os
 from utils import plot_training_metrics
 
 
-model_name = "YOLOv1ResNet"
+model_name = "YOLOv2ResNet"
 
 # Load metrics
 metrics_path = f"metrics/{model_name}/train_metrics.pth"

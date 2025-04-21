@@ -1,4 +1,4 @@
-# YOLOv1
+# YOLOv2
 
 Differences:
 
@@ -6,11 +6,11 @@ Differences:
 2. Use log scale w/h
 3. IOU across each box and find max to match
 
-Goal: DeiT for YOLOv1 using my model as a teacher.
+Goal: DeiT for YOLOv2 using my model as a teacher.
 
 DeiT on PASCAL VOC: https://www.ecva.net/papers/eccv_2024/papers_ECCV/papers/11504.pdf
 
-# YOLOv1ResNet Notes
+# YOLOv2ResNet Notes
 
 1. Used pretrained ResNet50 as backbone. Detector as normal without dropout
 2. Trained for 150 epochs with frozen backbone @ LR=1e-4

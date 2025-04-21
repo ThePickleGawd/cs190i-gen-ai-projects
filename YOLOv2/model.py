@@ -5,9 +5,9 @@ from torchvision.models import resnet50, ResNet50_Weights, resnet18, ResNet18_We
 
 import config
 
-# Original YOLOv1 from scratch
+# Original YOLOv2 from scratch
 
-class YOLOv1(nn.Module):
+class YOLOv2(nn.Module):
     def __init__(self):
         super().__init__()
 
@@ -111,16 +111,16 @@ class YOLOv1(nn.Module):
         output = output.view(-1, config.S, config.S, self.depth)
         return output
     
-class YOLOv1ViT(nn.Module):
+class YOLOv2ViT(nn.Module):
     def __init__(self):
         super().__init__()
  
     def forward(self, X):
         pass
 
-# YOLOv1 with ResNet50 backbone
+# YOLOv2 with ResNet50 backbone
 
-class YOLOv1ResNet(nn.Module):
+class YOLOv2ResNet(nn.Module):
     def __init__(self):
         super().__init__()
         self.depth = config.B * 5 + config.C
@@ -149,7 +149,7 @@ class YOLOv1ResNet(nn.Module):
         return self.model.forward(x)
     
 class DetectionNet(nn.Module):
-    """The layers added on for detection as described in the YOLOv1 paper, with BatchNorm."""
+    """The layers added on for detection as described in the YOLOv2 paper, with BatchNorm."""
 
     def __init__(self, in_channels):
         super().__init__()
@@ -214,7 +214,7 @@ class ResNet18(nn.Module):
     def forward(self, x):
         return self.model.forward(x)
 
-class YOLOv1ResNet18(nn.Module):
+class YOLOv2ResNet18(nn.Module):
     def __init__(self, backbone_weights=None):
         super().__init__()
         self.depth = config.B * (5 + config.C)

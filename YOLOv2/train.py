@@ -11,7 +11,7 @@ from torchmetrics.detection.mean_ap import MeanAveragePrecision
 from tqdm import tqdm
 
 from data import VOCDataset
-from model import YOLOv1, YOLOv1ViT, YOLOv1ResNet, YOLOv1ResNet18
+from model import YOLOv2, YOLOv2ViT, YOLOv2ResNet, YOLOv2ResNet18
 from loss import YOLOLoss, YOLOV2Loss
 import config
 from utils import batch_to_mAP_list, plot_training_metrics
@@ -20,7 +20,7 @@ from utils import batch_to_mAP_list, plot_training_metrics
 def main():
     # CLI arguments
     parser = argparse.ArgumentParser("YOLO Training")
-    parser.add_argument("--model", choices=["YOLOv1","YOLOv1ViT","YOLOv1ResNet", "YOLOv1ResNet18"], default="YOLOv1ResNet")
+    parser.add_argument("--model", choices=["YOLOv2","YOLOv2ViT","YOLOv2ResNet", "YOLOv2ResNet18"], default="YOLOv2ResNet")
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--epochs", type=int, default=200)
     parser.add_argument("--lr", type=float, default=1e-4)
@@ -48,7 +48,7 @@ def main():
     val_loader = DataLoader(val_ds, batch_size=args.batch_size, shuffle=False, collate_fn=lambda b: tuple(zip(*b)))
 
     # Model
-    model_cls = {"YOLOv1": YOLOv1, "YOLOv1ViT": YOLOv1ViT, "YOLOv1ResNet": YOLOv1ResNet}[args.model]
+    model_cls = {"YOLOv2": YOLOv2, "YOLOv2ViT": YOLOv2ViT, "YOLOv2ResNet": YOLOv2ResNet}[args.model]
     model = model_cls().to(device)
 
     # Optimizer with parameter groups for ResNet fine-tuning

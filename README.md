@@ -6,6 +6,14 @@ Projects for Spring '25 CS 190I
 
 ```
 pip install uv
+
+# Install most compatible torch
+UV_TORCH_BACKEND=auto uv pip install torch
+
+# Install mambavision
+uv pip install mambavision
+
+uv sync
 ```
 
 ## Running Batches on CSIL

@@ -6,7 +6,7 @@ import matplotlib.patches as patches
 from torchvision.ops import nms
 from torch.utils.data import DataLoader
 from data import VOCDataset
-from model import YOLOv1ResNet, YOLOv1
+from model import YOLOv2ResNet, YOLOv2
 import config
 
 # Argument parsing
@@ -26,8 +26,8 @@ device = torch.device(
 print(f"Using device: {device}, show_gt={SHOW_GT}")
 
 # Load model
-model = YOLOv1().to(device)
-state = torch.load("checkpoints/YOLOv1/best_model.pth", map_location=device)
+model = YOLOv2().to(device)
+state = torch.load("checkpoints/YOLOv2/best_model.pth", map_location=device)
 model.load_state_dict(state["model_state_dict"])
 model.eval()
 

@@ -7,7 +7,7 @@ import matplotlib.patches as patches
 from torchvision.ops import nms
 from torch.utils.data import DataLoader
 from data import VOCDataset
-from model import YOLOv1
+from model import YOLOv2
 import config
 
 # Argument parsing (keep --no-gt if you want)
@@ -19,15 +19,15 @@ args = parser.parse_args()
 SHOW_GT = args.show_gt
 
 # Prepare output dir
-out_dir = "images/YOLOv1"
+out_dir = "images/YOLOv2"
 os.makedirs(out_dir, exist_ok=True)
 
 # Device & model
 device = torch.device("cuda" if torch.cuda.is_available()
                       else "mps" if torch.backends.mps.is_available()
                       else "cpu")
-model = YOLOv1().to(device)
-state = torch.load("checkpoints/YOLOv1/best_model.pth", map_location=device)
+model = YOLOv2().to(device)
+state = torch.load("checkpoints/YOLOv2/best_model.pth", map_location=device)
 model.load_state_dict(state["model_state_dict"])
 model.eval()
 

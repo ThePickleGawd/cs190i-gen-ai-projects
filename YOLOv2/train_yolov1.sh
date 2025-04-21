@@ -1,11 +1,11 @@
 #!/bin/bash
 # ========================================
-# Script: train_YOLOv1.sh
-# Description: Train the vanilla YOLOv1 model
-# Usage: bash train_YOLOv1.sh
+# Script: train_YOLOv2.sh
+# Description: Train the vanilla YOLOv2 model
+# Usage: bash train_YOLOv2.sh
 # ========================================
 
-MODEL="YOLOv1"
+MODEL="YOLOv2"
 BATCH=64
 LR=1e-4
 EPOCHS=120

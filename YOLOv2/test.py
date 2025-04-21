@@ -3,7 +3,7 @@ from torch.utils.data import DataLoader
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
 from utils import batch_to_mAP_list
 
-from model import YOLOv1, YOLOv1ResNet, YOLOv1ViT
+from model import YOLOv2, YOLOv2ResNet, YOLOv2ViT
 from data import VOCDataset
 import config
 from tqdm import tqdm
@@ -20,11 +20,11 @@ test_dataloader = DataLoader(test_ds, batch_size=64, collate_fn=collate_fn)
 ## Model and Metric
 
 device = "cuda" if torch.cuda.is_available() else "mps"
-model_name = "YOLOv1ResNet"
+model_name = "YOLOv2ResNet"
 models = {
-    "YOLOv1": YOLOv1,
-    "YOLOv1Vit": YOLOv1ViT,
-    "YOLOv1ResNet": YOLOv1ResNet
+    "YOLOv2": YOLOv2,
+    "YOLOv2Vit": YOLOv2ViT,
+    "YOLOv2ResNet": YOLOv2ResNet
 }
 model = models[model_name]().to(device)
 checkpoint = torch.load(f"checkpoints/{model_name}/best_model.pth", map_location=device)

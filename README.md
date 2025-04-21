@@ -2,6 +2,12 @@
 
 Projects for Spring '25 CS 190I
 
+## Prerequisites
+
+```
+pip install uv
+```
+
 ## Running Batches on CSIL
 
 ```bash

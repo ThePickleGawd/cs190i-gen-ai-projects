@@ -9,10 +9,12 @@ dependencies = [
     "faster-coco-eval>=1.6.5",
     "matplotlib>=3.10.1",
     "numpy>=2.2.4",
+    "opencv-python>=4.11.0.86",
     "tensorboard>=2.19.0",
     "torch>=2.6.0",
     "torchmetrics>=1.7.1",
     "torchvision>=0.21.0",
+    "transformers>=4.51.3",
 ]
 
 [tool.uv.sources]

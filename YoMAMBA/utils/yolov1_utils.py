@@ -2,7 +2,7 @@ import torch
 from collections import Counter
 device = "cuda"
 
-def intersec_over_union(bboxes_preds, bboxes_targets, boxformat = "midpoints"):    
+def intersection_over_union(bboxes_preds, bboxes_targets, boxformat = "midpoints"):    
     """
     Calculates intersection of unions (IoU).
     Input: Boundbing box predictions (tensor) x1, x2, y1, y2 of shape (N , 4)
@@ -121,7 +121,7 @@ def mean_avg_precision(bboxes_preds, bboxes_targets, iou_threshold = 0.5,
             
             # iterate over all ground truth bbox in grout truth image
             for idx, gt in enumerate(ground_truth_img):
-                iou = intersec_over_union(
+                iou = intersection_over_union(
                     # extract x1,x2,y1,y2 using index 3:
                     bboxes_preds = torch.unsqueeze(torch.tensor(detection[3:]),0),
                     bboxes_targets = torch.unsqueeze(torch.tensor(gt[3:]),0),
@@ -163,8 +163,7 @@ def mean_avg_precision(bboxes_preds, bboxes_targets, iou_threshold = 0.5,
     
     return sum(avg_precision) / len(avg_precision)
 
-def get_bboxes(loader, model, iou_threshold, threshold, pred_format="cells", boxformat="midpoints",
-    device="cuda" if torch.cuda.is_available() else "cpu"):
+def get_bboxes(loader, model, iou_threshold, threshold, pred_format="cells", boxformat="midpoints", device="cuda"):
     
     all_pred_boxes = []
     all_true_boxes = []
@@ -212,9 +211,9 @@ def convert_cellboxes(predictions, S=7):
     predictions = predictions.to("cpu")
     batch_size = predictions.shape[0]
     predictions = predictions.reshape(batch_size, 7, 7, 30)
-    bboxes1 = predictions[..., 21:25]
-    bboxes2 = predictions[..., 26:30]
-    scores = torch.cat( (predictions[..., 20].unsqueeze(0), predictions[..., 25].unsqueeze(0)), dim=0 )
+    bboxes1 = predictions[..., 20:24]
+    bboxes2 = predictions[..., 25:29]
+    scores = torch.cat( (predictions[..., 21].unsqueeze(0), predictions[..., 24].unsqueeze(0)), dim=0 )
     best_box = scores.argmax(0).unsqueeze(-1)
     best_boxes = bboxes1 * (1 - best_box) + best_box * bboxes2
     cell_indices = torch.arange(7).repeat(batch_size, 7, 1).unsqueeze(-1)
@@ -223,7 +222,7 @@ def convert_cellboxes(predictions, S=7):
     w_y = 1 / S * best_boxes[..., 2:4]
     converted_bboxes = torch.cat((x, y, w_y), dim=-1)
     predicted_class = predictions[..., :20].argmax(-1).unsqueeze(-1)
-    best_confidence = torch.max(predictions[..., 20], predictions[..., 25]).unsqueeze(-1)
+    best_confidence = torch.max(predictions[..., 20], predictions[..., 24]).unsqueeze(-1)
     converted_preds = torch.cat( (predicted_class, best_confidence, converted_bboxes), dim=-1 )
 
     return converted_preds
@@ -270,7 +269,7 @@ def non_max_suppression(bboxes, iou_threshold, threshold, boxformat="corners"):
             box
             for box in bboxes
             if box[0] != chosen_box[0]
-            or intersec_over_union(
+            or intersection_over_union(
                 torch.tensor(chosen_box[2:]),
                 torch.tensor(box[2:]),
                 boxformat=boxformat,
@@ -354,7 +353,7 @@ def mean_average_precision(
             best_iou = 0
 
             for idx, gt in enumerate(ground_truth_img):
-                iou = intersec_over_union(
+                iou = intersection_over_union(
                     torch.tensor(detection[3:]),
                     torch.tensor(gt[3:]),
                     boxformat=boxformat,

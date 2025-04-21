@@ -28,7 +28,7 @@ use_resnet18_backbone = True
 use_mamba_backbone = False
 
 # Train Model
-def train(train_loader, model, optimizer, loss_fn, epoch):
+def train(train_loader, model, optimizer, loss_fn, scheduler, epoch):
     """
     Input: train loader (torch loader), model (torch model), optimizer (torch optimizer)
           loss function (torch custom yolov1 loss).
@@ -39,7 +39,7 @@ def train(train_loader, model, optimizer, loss_fn, epoch):
     total_loss = 0.0
     t0 = time.time()
     pbar = tqdm(train_loader, desc=f"Train: Epoch {epoch+1}/{epochs}")
-    for batch_idx, (x, y) in enumerate(pbar):
+    for x, y in pbar:
         x, y = x.to(device), y.to(device)
         
         out = model(x)
@@ -52,6 +52,7 @@ def train(train_loader, model, optimizer, loss_fn, epoch):
         total_loss += loss.item()
         pbar.set_postfix({'loss': loss.item()})
 
+    scheduler.step()
     elapsed = time.time() - t0
     avg_loss = total_loss / len(train_loader)
     return avg_loss, elapsed
@@ -68,7 +69,7 @@ def val(val_loader, model, loss_fn, epoch):
         total_loss = 0.0
         t0 = time.time()
         pbar = tqdm(val_loader, desc=f"Val: Epoch: {epoch+1}/{epochs}")
-        for batch_idx, (x, y) in enumerate(val_loader):
+        for x, y in val_loader:
             x, y = x.to(device), y.to(device)
 
             out = model(x)
@@ -131,21 +132,21 @@ def main():
     scheduler = LambdaLR(optimizer, lr_lambda=lr_lambda, last_epoch=last_epoch if last_epoch > 0 else -1)
 
     # Dataset
+    def collate_fn(batch):
+        images, targets = zip(*batch)
+        images = torch.stack(images)
+        targets = torch.stack(targets)
+        return images, targets
+
     train_ds = VOCDataset("train")
     val_ds = VOCDataset("val")
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, collate_fn=lambda b: tuple(zip(*b)))
-    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, collate_fn=lambda b: tuple(zip(*b)))
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
+    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False, collate_fn=collate_fn)
 
     for epoch in range(last_epoch, epochs):
-        # for training data
-        pred_bbox, target_bbox = get_bboxes(train_loader, model, iou_threshold = 0.5, 
-                                        threshold = 0.4)
-
-        val_pred_bbox, val_target_bbox = get_bboxes(val_loader, model, iou_threshold = 0.5, 
-                                        threshold = 0.4)                                
         
         # Train Step
-        train_loss_value, train_time = train(train_loader, model, optimizer, loss_fn, epoch)
+        train_loss_value, train_time = train(train_loader, model, optimizer, loss_fn, scheduler, epoch)
         train_loss_list.append(train_loss_value)
 
         print(
@@ -156,6 +157,8 @@ def main():
 
         # Evaluate: Val loss, train mAP, val mAP
         if epoch > 0 and (epoch + 1) % eval_interval == 0:
+            pred_bbox, target_bbox = get_bboxes(train_loader, model, iou_threshold = 0.5, threshold = 0.4)
+            val_pred_bbox, val_target_bbox = get_bboxes(val_loader, model, iou_threshold = 0.5, threshold = 0.4)                                
             val_loss_value, val_time = val(val_loader, model, loss_fn, epoch)
             val_loss_list.append(val_loss_value)
             train_mAP_val = mAP(pred_bbox, target_bbox, iou_threshold = 0.5, boxformat="midpoints")

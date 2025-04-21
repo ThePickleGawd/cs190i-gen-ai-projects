@@ -65,10 +65,3 @@ class YoloV1_Resnet18(nn.Module):
              if type(self.yolov1head[i]) == torch.nn.modules.conv.Conv2d:
                 self.yolov1head[i].weight.data = self.yolov1head[i].weight.data.normal_(0, 0.02)
                 self.yolov1head[i].bias.data = self.yolov1head[i].bias.data.zero_()
-def test ():
-    model = YoloV1_Resnet18()
-    x = torch.rand(2, 3, 448, 448)
-    xshape = model(x).shape
-    return x, xshape
-
-testx, xdims = test()

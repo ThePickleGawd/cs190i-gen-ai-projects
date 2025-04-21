@@ -1,0 +1,1 @@
+Using pretrained resnet18, layer4 unfrozen.

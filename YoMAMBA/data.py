@@ -24,7 +24,7 @@ class VOCDataset(Dataset):
             v2.ToDtype(torch.float32, scale=True),
         ])
 
-        self.dataset = VOCDetection(root=config.DATA_PATH, download=True, year="2012", image_set=image_set, transform=None)
+        self.dataset = VOCDetection(root=config.DATA_PATH, download=False, year="2012", image_set=image_set, transform=None)
         self.classes = {cls: idx for idx, cls in enumerate(config.VOC_CLASSES)}
 
     def __len__(self):
@@ -60,38 +60,39 @@ class VOCDataset(Dataset):
 
         image, boxes = self.image_transform(image, boxes)
 
-        depth = config.B * (5 + config.C)
+        depth = config.C + 5 * config.B
         target = torch.zeros((config.S, config.S, depth), dtype=torch.float32)
 
         for i in range(len(boxes)):
             xmin, ymin, xmax, ymax = boxes[i]
             class_idx = class_ids[i]
+
+            # Class Label
             one_hot = torch.zeros(config.C)
             one_hot[class_idx] = 1
 
+            # Find cell to insert into
             x_center = (xmin + xmax) / 2
             y_center = (ymin + ymax) / 2
             x_cell_size = config.IMG_SIZE[0] / config.S
             y_cell_size = config.IMG_SIZE[1] / config.S
-
             x_cell = min(int(x_center // x_cell_size), config.S - 1)
             y_cell = min(int(y_center // y_cell_size), config.S - 1)
 
+            # Find x,y,w,h
             x_cell_tl = x_cell * int(x_cell_size)
             y_cell_tl = y_cell * int(y_cell_size)
-
             x = (x_center - x_cell_tl) / x_cell_size
             y = (y_center - y_cell_tl) / y_cell_size
             w = (xmax - xmin) / config.IMG_SIZE[0]
             h = (ymax - ymin) / config.IMG_SIZE[1]
 
+            # Construct label
             bbox = torch.tensor([x, y, w, h, 1.0])
-            label_vector = torch.concat([bbox, one_hot])
+            empty = torch.tensor([0, 0, 0, 0, 0])
+            label_vector = torch.concat([one_hot, bbox, empty])
 
-            for b in range(config.B):
-                if torch.any(target[y_cell, x_cell, b*(5+config.C):(b+1)*(5+config.C)] != 0):
-                    continue
-                target[y_cell, x_cell, b*(5+config.C):(b+1)*(5+config.C)] = label_vector
-                break
-
+            # Note: This will override previously placed label
+            target[y_cell, x_cell] = label_vector
+           
         return image, target

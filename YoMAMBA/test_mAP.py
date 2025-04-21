@@ -38,15 +38,15 @@ def main():
     else:
         print("No backbone was specified")
         return 1
-    ckpt_dir = f"../checkpoints/{current_model}"
-    ckpt_path = f"{ckpt_dir}/yolov1.pth"
+    ckpt_dir = f"checkpoints/{current_model}"
+    ckpt_path = f"{ckpt_dir}/resnet18_adj_lr_yolov1.cpt"
 
     if os.path.exists(ckpt_path):
         checkpoint = torch.load(ckpt_path)
         model.load_state_dict(checkpoint["model_state_dict"])
         last_epoch = checkpoint["epoch"]
         print(f"Checkpoint from epoch:{last_epoch + 1} successfully loaded.")
-
+        
     # Dataset
     def collate_fn(batch):
         images, targets = zip(*batch)

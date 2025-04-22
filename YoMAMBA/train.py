@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader
 from loss.yolov1_loss import YoloV1Loss
 from torch.optim.lr_scheduler import LambdaLR
 from models.yolov1_resnet18 import YoloV1_Resnet18
+from models.yolov1_resnet101 import YoloV1_Resnet101
 from models.yolov1_mamba import YoloV1_Mamba
 
 from utils.yolov1_utils import get_bboxes, mean_average_precision as mAP
@@ -24,8 +25,9 @@ checkpoint_interval = 10
 eval_interval = 10
 
 # Select Model
-use_resnet18_backbone = True
-use_mamba_backbone = False
+use_resnet18_backbone = False
+use_resnet101_backbone = False
+use_mamba_backbone = True
 
 # Train Model
 def train(train_loader, model, optimizer, loss_fn, scheduler, epoch):
@@ -92,6 +94,10 @@ def main():
         lr =  1e-5
         current_model = "resnet18"
         model = YoloV1_Resnet18(S=7, B=2, C=20).to(device)
+    elif use_resnet18_backbone:
+        lr =  1e-5
+        current_model = "resnet101"
+        model = YoloV1_Resnet101(S=7, B=2, C=20).to(device)
     else:
         print("No backbone was specified")
         return 1
@@ -109,8 +115,10 @@ def main():
 
     train_loss_list = []
     train_mAP_list = []
+    train_times_list = []
     val_mAP_list = []
     val_loss_list = []
+    val_times_list = []
     last_epoch = 0
 
     if os.path.exists(ckpt_path):
@@ -124,8 +132,10 @@ def main():
         m = torch.load(metric_path)
         train_loss_list = m["train_losses"]
         train_mAP_list = m["train_mAP"]
+        train_times_list = m["train_times"]
         val_loss_list = m["val_losses"]
         val_mAP_list = m["val_mAP"]
+        val_times_list = m["val_times"]
 
     def lr_lambda(epoch):
         if epoch <= 5: return 1 + 9 * (epoch / 5)     # linearly from 1× to 10×
@@ -151,6 +161,7 @@ def main():
         # Train Step
         train_loss_value, train_time = train(train_loader, model, optimizer, loss_fn, scheduler, epoch)
         train_loss_list.append(train_loss_value)
+        train_times_list.append(train_time)
 
         print(
             f"Epoch {epoch + 1} | "
@@ -159,9 +170,10 @@ def main():
         )
 
         # Evaluate: Val loss, train mAP, val mAP
-        if epoch > 0 and (epoch + 1) % eval_interval == 0:
+        if (epoch + 1) % eval_interval == 0:
             val_loss_value, val_time = val(val_loader, model, loss_fn, epoch)
             val_loss_list.append(val_loss_value)
+            val_times_list.append(val_time)
             pred_bbox, target_bbox = get_bboxes(train_loader, model, iou_threshold = 0.5, threshold = 0.4)
             val_pred_bbox, val_target_bbox = get_bboxes(val_loader, model, iou_threshold = 0.5, threshold = 0.4)                                
             train_mAP_val = mAP(pred_bbox, target_bbox, iou_threshold = 0.5, boxformat="midpoints")
@@ -183,8 +195,10 @@ def main():
             torch.save({
                 "train_losses": train_loss_list,
                 "train_mAP": train_mAP_list,
+                "train_times": train_times_list,
                 "val_losses": val_loss_list,
-                "val_mAP": val_mAP_list
+                "val_mAP": val_mAP_list,
+                "val_times": val_times_list
             }, metric_path)
             print(f"Saved last model and metrics")
 

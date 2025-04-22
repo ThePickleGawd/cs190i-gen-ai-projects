@@ -13,7 +13,6 @@ import matplotlib.pyplot as plt
 from utils.yolov1_utils import draw_bounding_box
 
 transform = T.Compose([T.ToTensor()])
-weight_decay = 0.0005
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Select model

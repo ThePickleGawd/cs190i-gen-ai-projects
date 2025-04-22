@@ -94,7 +94,7 @@ def main():
         lr =  1e-5
         current_model = "resnet18"
         model = YoloV1_Resnet18(S=7, B=2, C=20).to(device)
-    elif use_resnet18_backbone:
+    elif use_resnet101_backbone:
         lr =  1e-5
         current_model = "resnet101"
         model = YoloV1_Resnet101(S=7, B=2, C=20).to(device)
@@ -170,7 +170,7 @@ def main():
         )
 
         # Evaluate: Val loss, train mAP, val mAP
-        if (epoch + 1) % eval_interval == 0:
+        if epoch == 0 or (epoch + 1) % eval_interval == 0:
             val_loss_value, val_time = val(val_loader, model, loss_fn, epoch)
             val_loss_list.append(val_loss_value)
             val_times_list.append(val_time)

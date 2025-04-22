@@ -1,5 +1,9 @@
 import torch 
 from collections import Counter
+import cv2
+from PIL import Image
+import numpy as np
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 def intersection_over_union(bboxes_preds, bboxes_targets, boxformat = "midpoints"):    
@@ -387,3 +391,94 @@ def mean_average_precision(
         average_precisions.append(torch.trapz(precisions, recalls))
 
     return sum(average_precisions) / len(average_precisions)
+
+
+def draw_bounding_box(image, bounding_boxes, test = False):
+    """
+    Input: PIL image and bounding boxes (as list).
+    Output: Image with drawn bounding boxes.
+    """
+    image = np.ascontiguousarray(image, dtype = np.uint8)
+    colors = [[147,69,52], # aeroplane
+                [29,178,255], # bicycle 
+                [200,149,255], # bird
+                [151,157, 255], # boat 
+                [255,115,100], # bottle 
+                [134,219,61], # bus
+                [199,55,255], # car 
+                [49,210,207], # cat
+                [187,212, 0], # chair
+                [52,147,26], # cow
+                [236,24,0], # diningtable
+                [168,153,44], # dog
+                [56,56,255], # horse
+                [10,249,72], # motorbike
+                [255,194, 0], # person
+                [255,56,132], # plant
+                [133,0,82], # sheep
+                [255,56,203], # sofa
+                [31 ,112,255], # train
+                [23,204,146]] # tvmonitor
+    
+    class_names = ["aeroplane","bicycle","bird","boat","bottle","bus","car",
+        "cat","chair","cow","diningtable","dog","horse","motorbike","person",
+        "pottedplant","sheep","sofa","train","tvmonitor"]
+
+    # Extract transform_vals
+    for i in range(len(bounding_boxes)):
+        if test == True:
+            height, width = image.shape[:2]
+
+            class_pred = int(bounding_boxes[i][0])
+            certainty = bounding_boxes[i][1]
+            bounding_box = bounding_boxes[i][2:]
+
+            # Note: width and heigh indexes are switches, somewhere, these are switched so
+            # we correct for the switch by switching 
+            bounding_box[2], bounding_box[3] = bounding_box[3], bounding_box[2]
+            assert len(bounding_box) == 4, "Bounding box prediction exceed x, y ,w, h."
+            # Extract x, midpoint, y midpoint, w width and h height
+            x = bounding_box[0] 
+            y = bounding_box[1] 
+            w = bounding_box[2] 
+            h = bounding_box[3]  
+        
+        else:
+            height, width = image.shape[:2]
+            class_pred = int(bounding_boxes[i][0])
+            bounding_box = bounding_boxes[i][1:]
+            
+            assert len(bounding_box) == 4, "Bounding box prediction exceed x, y ,w, h."
+            # Extract x midpoint, y midpoint, w width and h height
+            x = bounding_box[0] 
+            y = bounding_box[1] 
+            w = bounding_box[2]
+            h = bounding_box[3] 
+
+        l = int((x - w / 2) * width)
+        r = int((x + w / 2) * width)
+        t = int((y - h / 2) * height)
+        b = int((y + h / 2) * height)
+        
+        if l < 0:
+            l = 0
+        if r > width - 1:
+            r = width - 1
+        if t < 0:
+            t = 0
+        if b > height - 1:
+            b = height - 1
+
+        image = cv2.rectangle(image, (l, t), (int(r), int(b)), colors[class_pred], 3)
+        (txt_width, txt_height), _ = cv2.getTextSize(class_names[class_pred], cv2.FONT_HERSHEY_TRIPLEX, 0.6, 2)
+
+        if t < 20:
+            image = cv2.rectangle(image, (l-2, t + 15), (l + txt_width, t), colors[class_pred], -1)
+            image = cv2.putText(image, class_names[class_pred], (l, t+12),
+                    cv2.FONT_HERSHEY_TRIPLEX, 0.5, [255, 255, 255], 1)
+        else:
+            image = cv2.rectangle(image, (l-2, t - 15), (l + txt_width, t), colors[class_pred], -1)
+            image = cv2.putText(image, class_names[class_pred], (l, t-3),
+                    cv2.FONT_HERSHEY_TRIPLEX, 0.5, [255, 255, 255], 1)
+   
+    return image

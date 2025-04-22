@@ -56,7 +56,7 @@ class YoloV1_Resnet18(nn.Module):
         self.random_weight_init()
 
     def forward(self, x):
-        x = self.resnet18backbone(x)
+        x = self.resnet18backbone(x) # (N, 512, 14, 14)
         x = self.yolov1head(x)
         return x
     

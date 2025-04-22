@@ -9,51 +9,41 @@ class YoloV1_Mamba(nn.Module):
         super(YoloV1_Mamba, self).__init__()
 
         print("Using pretrained mambavision, layer4 unfrozen.")
-        self.backbone = AutoModel.from_pretrained("nvidia/MambaVision-T-1K", trust_remote_code=True)
-        # TODO: Maybe freeze some layers?
+        mambavision = AutoModel.from_pretrained("nvidia/MambaVision-T-1K", trust_remote_code=True)
+        for param in mambavision.parameters():
+            param.requires_grad = False
 
-        self.yolov1head = nn.Sequential (
-            # Block 5 (last two conv layers)
-            # Since the last ResNet 18 layer consists of a (3x3, 512) conv layer
-            # we adjust the input size of the yolo head from 1024 to 512.
-            nn.Conv2d(in_channels = 512, out_channels = 1024, 
-                      kernel_size = (3, 3), stride = 1,
-                      padding = 1),
+        self.backbone = mambavision
+        
+
+        self.yolov1head = nn.Sequential(
+            nn.Conv2d(640, 1024, kernel_size=3, stride=1, padding=1),
             nn.BatchNorm2d(1024),
             nn.LeakyReLU(0.1),
-            nn.Conv2d(in_channels = 1024, out_channels = 1024, 
-                      kernel_size = (3, 3), stride = 2,
-                      padding = 1),
-            nn.BatchNorm2d(1024),
-            nn.LeakyReLU(0.1),
-           
-            # Block 6
-            nn.Conv2d(in_channels = 1024, out_channels = 1024, 
-                      kernel_size = (3, 3), stride = 1,
-                      padding = 1),
-            nn.BatchNorm2d(1024),
-            nn.LeakyReLU(0.1),
-            nn.Conv2d(in_channels = 1024, out_channels = 1024, 
-                      kernel_size = (3, 3), stride = 1,
-                      padding = 1),
+            nn.Conv2d(1024, 1024, kernel_size=3, stride=2, padding=1),  # 14x14 → 7x7
             nn.BatchNorm2d(1024),
             nn.LeakyReLU(0.1),
 
-            # prediction block
+            nn.Conv2d(1024, 1024, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(1024),
+            nn.LeakyReLU(0.1),
+            nn.Conv2d(1024, 1024, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(1024),
+            nn.LeakyReLU(0.1),
+
             nn.Flatten(),
-            nn.Linear(in_features = 1024 * S * S, out_features = 4096),
+            nn.Linear(1024 * 7 * 7, 4096),
             nn.Dropout(0.5),
             nn.LeakyReLU(0.1),
-            nn.Linear(in_features = 4096, out_features = S * S * (C + B * 5)),
-            # reshape in loss to be (S, S, 30) with C + B * 5 = 30
-            )
+            nn.Linear(4096, S * S * (C + B * 5)),
+        )
+
 
         self.random_weight_init()
 
     def forward(self, x):
         out_avg_pool, features = self.backbone(x) # MAMBA supports any input resolution LOL!!! YAY
-        x = features[3] # torch.Size([1, 640, 7, 7])
-
+        x = features[3] # torch.Size([N, 640, 14, 14])
         x = self.yolov1head(x)
         return x
     

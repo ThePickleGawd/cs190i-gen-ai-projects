@@ -6,7 +6,7 @@ class YoloV1_Resnet101(nn.Module):
     def __init__(self, S = 7, B = 2, C = 20):
         super(YoloV1_Resnet101, self).__init__()
 
-        print("Using pretrained resnet18, layer4 unfrozen.")
+        print("Using pretrained resnet101. Weights all frozen")
         resnet = models.resnet101(weights=models.ResNet101_Weights.DEFAULT)
         # Freeze all layers
         for param in resnet.parameters():
@@ -19,9 +19,7 @@ class YoloV1_Resnet101(nn.Module):
 
         self.yolov1head = nn.Sequential (
             # Block 5 (last two conv layers)
-            # Since the last ResNet 18 layer consists of a (3x3, 512) conv layer
-            # we adjust the input size of the yolo head from 1024 to 512.
-            nn.Conv2d(in_channels = 512, out_channels = 1024, 
+            nn.Conv2d(in_channels = 2048, out_channels = 1024, 
                       kernel_size = (3, 3), stride = 1,
                       padding = 1),
             nn.BatchNorm2d(1024),

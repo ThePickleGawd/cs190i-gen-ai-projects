@@ -8,7 +8,7 @@ class YoloV1_Mamba(nn.Module):
     def __init__(self, S = 7, B = 2, C = 20):
         super(YoloV1_Mamba, self).__init__()
 
-        print("Using pretrained mambavision, layer4 unfrozen.")
+        print("Using pretrained mambavision, weights all frozen")
         mambavision = AutoModel.from_pretrained("nvidia/MambaVision-T-1K", trust_remote_code=True)
         for param in mambavision.parameters():
             param.requires_grad = False

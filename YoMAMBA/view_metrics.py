@@ -6,8 +6,7 @@ def plot_metrics(train_losses, train_mAP, val_losses, val_mAP, train_times, mode
     os.makedirs(f"images/{model_name}", exist_ok=True)
 
     full_epochs = list(range(1, len(train_losses) + 1))
-    sampled_epochs = full_epochs[::10]
-    sampled_epochs[0] = 1
+    sampled_epochs = [1] + full_epochs[::10]
 
     fig, ax1 = plt.subplots()
 
@@ -44,7 +43,7 @@ def plot_metrics(train_losses, train_mAP, val_losses, val_mAP, train_times, mode
     plt.close()
 
 
-model_name = "resnet18"
+model_name = "mamba"
 metrics_path = f"metrics/{model_name}/metrics.pth"
 assert os.path.exists(metrics_path), "No saved metrics found."
 
@@ -53,6 +52,6 @@ train_losses = metrics['train_losses']
 val_losses = metrics['val_losses']
 train_mAP = metrics['train_mAP']
 val_mAP = metrics['val_mAP']
-train_times = metrics['train_times']  # <-- make sure you saved this during training
+train_times = metrics['train_times']
 
 plot_metrics(train_losses, train_mAP, val_losses, val_mAP, train_times, model_name)

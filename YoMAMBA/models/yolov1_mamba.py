@@ -8,12 +8,19 @@ class YoloV1_Mamba(nn.Module):
     def __init__(self, S = 7, B = 2, C = 20):
         super(YoloV1_Mamba, self).__init__()
 
-        print("Using pretrained mambavision, weights all frozen")
+        print("Using pretrained mambavision, last layer unfrozen")
         mambavision = AutoModel.from_pretrained("nvidia/MambaVision-T-1K", trust_remote_code=True)
         for param in mambavision.parameters():
             param.requires_grad = False
+        # Unfreeze the last feature extraction layer
+        for param in mambavision.model.levels[3].blocks[3].parameters():
+            param.requires_grad = True
 
         self.backbone = mambavision
+
+        # for name, module in mambavision.named_modules():
+        #     if "levels" in name:
+        #         print(name)
         
 
         self.yolov1head = nn.Sequential(
@@ -52,3 +59,5 @@ class YoloV1_Mamba(nn.Module):
              if type(self.yolov1head[i]) == torch.nn.modules.conv.Conv2d:
                 self.yolov1head[i].weight.data = self.yolov1head[i].weight.data.normal_(0, 0.02)
                 self.yolov1head[i].bias.data = self.yolov1head[i].bias.data.zero_()
+
+# x = YoloV1_Mamba()

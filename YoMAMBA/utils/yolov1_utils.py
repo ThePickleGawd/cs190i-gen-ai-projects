@@ -435,7 +435,7 @@ def draw_bounding_box(image, bounding_boxes, test = False):
 
             # Note: width and heigh indexes are switches, somewhere, these are switched so
             # we correct for the switch by switching 
-            bounding_box[2], bounding_box[3] = bounding_box[3], bounding_box[2]
+            # bounding_box[2], bounding_box[3] = bounding_box[3], bounding_box[2]
             assert len(bounding_box) == 4, "Bounding box prediction exceed x, y ,w, h."
             # Extract x, midpoint, y midpoint, w width and h height
             x = bounding_box[0] 

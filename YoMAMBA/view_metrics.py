@@ -54,4 +54,9 @@ train_mAP = metrics['train_mAP']
 val_mAP = metrics['val_mAP']
 train_times = metrics['train_times']
 
-plot_metrics(train_losses, train_mAP, val_losses, val_mAP, train_times, model_name)
+# plot_metrics(train_losses, train_mAP, val_losses, val_mAP, train_times, model_name)
+print(train_losses)
+print(val_losses)
+print(train_mAP)
+print(val_mAP)
+print(train_times)

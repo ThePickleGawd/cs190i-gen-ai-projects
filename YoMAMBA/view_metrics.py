@@ -43,7 +43,7 @@ def plot_metrics(train_losses, train_mAP, val_losses, val_mAP, train_times, mode
     plt.close()
 
 
-model_name = "mamba"
+model_name = "resnet18"
 metrics_path = f"metrics/{model_name}/metrics.pth"
 assert os.path.exists(metrics_path), "No saved metrics found."
 

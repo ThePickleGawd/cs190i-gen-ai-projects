@@ -45,7 +45,7 @@ lines_2, labels_2 = ax2.get_legend_handles_labels()
 ax1.legend(lines_1 + lines_2, labels_1 + labels_2, fontsize=16,
            loc="center left", bbox_to_anchor=(0.6, 0.45))
 
-plt.title("Training Statistics", fontsize=24)
+plt.title("Training @ 223.7 sec/epoch", fontsize=24)
 plt.tight_layout()
 os.makedirs("images", exist_ok=True)
 plt.savefig("images/figure_1.png")

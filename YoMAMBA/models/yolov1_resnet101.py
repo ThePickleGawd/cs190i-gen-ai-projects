@@ -1,12 +1,12 @@
-import torch
-import torch.nn as nn
-import torchvision.models as models
-
 import ssl
 import urllib.request
 
 # Create an unverified SSL context
 unsecure_context = ssl._create_unverified_context()
+
+import torch
+import torch.nn as nn
+import torchvision.models as models
 
 
 class YoloV1_Resnet101(nn.Module):

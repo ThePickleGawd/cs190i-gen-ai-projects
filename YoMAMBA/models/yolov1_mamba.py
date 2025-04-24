@@ -1,14 +1,14 @@
+import ssl
+import urllib.request
+
+# Override SSL context globally for downloads
+ssl._create_default_https_context = ssl._create_unverified_context
+
 import torch
 import torch.nn as nn
 import torchvision.models as models
 
 from transformers import AutoModel
-
-import ssl
-import urllib.request
-
-# Create an unverified SSL context
-unsecure_context = ssl._create_unverified_context()
 
 
 class YoloV1_Mamba(nn.Module):

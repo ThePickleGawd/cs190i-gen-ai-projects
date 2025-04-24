@@ -21,4 +21,3 @@ DeiT on PASCAL VOC: https://www.ecva.net/papers/eccv_2024/papers_ECCV/papers/115
 # Next Steps
 
 1. Use ResNet34 frozen backbone with dropout @ LR=1e-2 w/ warmup
-2.

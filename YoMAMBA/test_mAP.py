@@ -8,6 +8,7 @@ from models.yolov1_mamba import YoloV1_Mamba
 
 from utils.yolov1_utils import get_bboxes, mean_average_precision as mAP
 from data import VOCDataset
+import argparse
 
 
 device = "cuda"
@@ -23,9 +24,13 @@ eval_interval = 10
 mAP_train = False
 mAP_val = True
 
-# Select Model
-use_resnet18_backbone = True
-use_mamba_backbone = False
+parser = argparse.ArgumentParser()
+parser.add_argument('--use-mamba', action='store_true', help='Use Mamba backbone instead of ResNet18')
+args = parser.parse_args()
+
+# Model selection logic
+use_mamba_backbone = args.use_mamba
+use_resnet18_backbone = not use_mamba_backbone
     
 def main():
     # Select model

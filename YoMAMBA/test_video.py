@@ -18,8 +18,6 @@ transform = T.Compose([T.ToTensor()])
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Select model
-
-# Add this to your script before selecting the model
 parser = argparse.ArgumentParser()
 parser.add_argument('--use-mamba', action='store_true', help='Use Mamba backbone instead of ResNet18')
 args = parser.parse_args()

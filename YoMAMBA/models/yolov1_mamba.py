@@ -4,6 +4,13 @@ import torchvision.models as models
 
 from transformers import AutoModel
 
+import ssl
+import urllib.request
+
+# Create an unverified SSL context
+unsecure_context = ssl._create_unverified_context()
+
+
 class YoloV1_Mamba(nn.Module):
     def __init__(self, S = 7, B = 2, C = 20):
         super(YoloV1_Mamba, self).__init__()

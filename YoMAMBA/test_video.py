@@ -58,8 +58,8 @@ cap = cv2.VideoCapture(video_path)
 fps = 0
 fps_start = 0
 prev = 0 
-video_rec = cv2.VideoWriter(f'video/yolo_output.mp4', 
-                         cv2.VideoWriter_fourcc(*'mp4v'),
+video_rec = cv2.VideoWriter(f'video/yolo_output.webm', 
+                         cv2.VideoWriter_fourcc(*'VP80'),  # VP80 is the WebM-compatible codec
                          30, (448, 448))
 
 def can_use_imshow():

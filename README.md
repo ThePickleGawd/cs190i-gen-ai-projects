@@ -17,8 +17,12 @@ UV_TORCH_BACKEND=auto uv pip install torch
 # Sync packages
 uv sync
 
-# Install mambavision (required)
+# Yo Mamba (YOLO) requirements
 uv pip install mambavision
+
+# Mo Bamba (Finetuned LLM) Requirements
+git submodule update --init --recursive
+pip install git+https://github.com/huggingface/transformers.git
 ```
 
 ### Train

@@ -8,7 +8,7 @@ from datasets import load_dataset
 tokenizer = AutoTokenizer.from_pretrained("AntonV/mamba2-130m-hf")
 model = AutoModelForCausalLM.from_pretrained(
     "AntonV/mamba2-130m-hf",
-    load_in_8bit=True
+    load_in_4bit=True
 )
 
 # Model "AntonV/mamba2-130m-hf"
@@ -36,6 +36,6 @@ trainer = SFTTrainer(
     args=training_args,
     peft_config=lora_config,
     train_dataset=dataset,
-    # dataset_text_field="text",
+    dataset_text_field="text",
 )
 trainer.train()

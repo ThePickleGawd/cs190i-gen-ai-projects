@@ -5,14 +5,14 @@ from datasets import load_dataset
 import torch
 import json
 
-output_dir = "outputs/Llama-3.2-1B-bnb-4bit-full"
+output_dir = "outputs/Llama-3.2-3B-bnb-4bit-full"
 max_seq_length = 2048
 dtype = None  # Auto-detect (float16 or bfloat16)
 load_in_4bit = False  # Full fine-tuning needs full-precision
 
 # Load model and tokenizer (no LoRA)
 model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name="unsloth/Llama-3.2-1B-bnb-4bit",
+    model_name="unsloth/Llama-3.2-3B-bnb-4bit",
     max_seq_length=max_seq_length,
     dtype=dtype,
     load_in_4bit=load_in_4bit,

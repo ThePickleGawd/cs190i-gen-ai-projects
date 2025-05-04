@@ -3,6 +3,7 @@ from datasets import load_dataset
 from trl import SFTConfig, SFTTrainer, DataCollatorForCompletionOnlyLM
 from peft import LoraConfig
 import math
+import json
 
 # Load dataset (just has 'text' field)
 dataset = load_dataset("JunhaoYu/processed_rap_lyrics", split="train")
@@ -30,6 +31,8 @@ train_args = SFTConfig(
     output_dir="outputs/mo-bamba-9B-lora",
     gradient_checkpointing=True,
     num_train_epochs=3,
+    save_strategy="epoch",
+    learning_rate = 2e-4,
 )
 
 # add peft config
@@ -50,4 +53,10 @@ trainer = SFTTrainer(
     data_collator=collator,
 )
 
-trainer.train()
+# Train the model
+trainer_stats = trainer.train()
+
+# Save basic training metrics
+metrics = trainer_stats.metrics
+with open(f"outputs/mo-bamba-9B-lora/training_metrics.json", "w") as f:
+    json.dump(metrics, f, indent=2)

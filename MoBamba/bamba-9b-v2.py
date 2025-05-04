@@ -1,6 +1,7 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer, PreTrainedTokenizer, PreTrainedModel
 from datasets import load_dataset
 from trl import SFTConfig, SFTTrainer, DataCollatorForCompletionOnlyLM
+import json
 import math
 
 # Load dataset (just has 'text' field)
@@ -29,6 +30,8 @@ train_args = SFTConfig(
     output_dir="outputs/mo-bamba-9B-full",
     gradient_checkpointing=True,
     num_train_epochs=3,
+    save_strategy="epoch",
+    learning_rate = 2e-4,
 )
 
 # Trainer setup
@@ -41,4 +44,9 @@ trainer = SFTTrainer(
 )
 
 # Train the model
-trainer.train()
+trainer_stats = trainer.train()
+
+# Save basic training metrics
+metrics = trainer_stats.metrics
+with open(f"outputs/mo-bamba-9B-full/training_metrics.json", "w") as f:
+    json.dump(metrics, f, indent=2)

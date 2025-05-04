@@ -6,23 +6,21 @@ import torch
 import json
 
 # Settings
-output_dir = "outputs/Llama-3.2-3B-bnb-4bit-qlora"
+output_dir = "outputs/Llama-3.2-3B-lora"
 max_seq_length = 2048
 dtype = None
-load_in_4bit = True
+load_in_4bit = False
 
 model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name = "unsloth/Llama-3.2-3B-bnb-4bit",
+    model_name = "unsloth/Llama-3.2-3B",
     max_seq_length = max_seq_length,
     dtype = dtype,
     load_in_4bit = load_in_4bit,
-    # token = "hf_...", # use one if using gated models like meta-llama/Llama-2-7b-hf
 )
-
 
 model = FastLanguageModel.get_peft_model(
     model,
-    r = 16, # Choose any number > 0 ! Suggested 8, 16, 32, 64, 128
+    r = 8, # Choose any number > 0 ! Suggested 8, 16, 32, 64, 128
     target_modules = ["q_proj", "k_proj", "v_proj", "o_proj",
                       "gate_proj", "up_proj", "down_proj",],
     lora_alpha = 16,
@@ -47,8 +45,8 @@ trainer = SFTTrainer(
     dataset_num_proc = 2,
     packing = False, # Can make training 5x faster for short sequences.
     args = TrainingArguments(
-        per_device_train_batch_size = 2,
-        gradient_accumulation_steps = 4,
+        per_device_train_batch_size = 1,
+        gradient_accumulation_steps = 8,
         warmup_steps = 5,
         num_train_epochs = 3, # Set this for 1 full training run.
         # max_steps = 60,

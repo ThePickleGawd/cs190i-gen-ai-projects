@@ -5,19 +5,16 @@ from peft import LoraConfig
 from datasets import load_dataset
 
 # Dataset "JunhaoYu/processed_rap_lyrics"
-tokenizer = AutoTokenizer.from_pretrained("AntonV/mamba2-130m-hf")
-model = AutoModelForCausalLM.from_pretrained(
-    "AntonV/mamba2-130m-hf",
-    load_in_4bit=True
-)
+tokenizer = AutoTokenizer.from_pretrained("AntonV/mamba2-780m-hf")
+model = AutoModelForCausalLM.from_pretrained("AntonV/mamba2-780m-hf")
 
-# Model "AntonV/mamba2-130m-hf"
+# Model "AntonV/mamba2-780m-hf"
 dataset = load_dataset("JunhaoYu/processed_rap_lyrics", split="train")
 
 training_args = TrainingArguments(
     output_dir="./results",
     num_train_epochs=3,
-    per_device_train_batch_size=1,
+    per_device_train_batch_size=4,
     logging_dir='./logs',
     logging_steps=10,
     learning_rate=2e-3

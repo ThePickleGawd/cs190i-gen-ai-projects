@@ -7,3 +7,6 @@
 [submodule "MoBamba/third-party/flash-attention"]
 	path = MoBamba/third-party/flash-attention
 	url = https://github.com/Dao-AILab/flash-attention.git
+[submodule "MoBamba/third-party/geval"]
+	path = MoBamba/third-party/geval
+	url = https://github.com/nlpyang/geval.git

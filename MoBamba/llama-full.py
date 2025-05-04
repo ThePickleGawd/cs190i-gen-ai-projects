@@ -5,17 +5,18 @@ from datasets import load_dataset
 import torch
 import json
 
-output_dir = "outputs/Llama-3.2-3B-bnb-4bit-full"
+output_dir = "outputs/Llama-3.2-1B-full"
 max_seq_length = 2048
 dtype = None  # Auto-detect (float16 or bfloat16)
-load_in_4bit = False  # Full fine-tuning needs full-precision
+load_in_4bit = True
 
 # Load model and tokenizer (no LoRA)
 model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name="unsloth/Llama-3.2-3B-bnb-4bit",
-    max_seq_length=max_seq_length,
+    model_name="unsloth/Llama-3.2-1B-bnb-4bit",
+    max_seq_length=max_seq_length,  
     dtype=dtype,
     load_in_4bit=load_in_4bit,
+    full_finetuning=True
 )
 
 # Enable gradient checkpointing (optional)
@@ -35,7 +36,7 @@ trainer = SFTTrainer(
     dataset_num_proc=2,
     packing=False,
     args=TrainingArguments(
-        per_device_train_batch_size=2,
+        per_device_train_batch_size=1,
         gradient_accumulation_steps=4,
         warmup_steps=5,
         num_train_epochs=3,
@@ -55,13 +56,6 @@ trainer = SFTTrainer(
 
 train_output = trainer.train()
 
-model.save_pretrained(output_dir)
-tokenizer.save_pretrained(output_dir)
-
 # Save metrics
 with open(f"{output_dir}/training_metrics.json", "w") as f:
     json.dump(train_output.metrics, f, indent=2)
-
-# Save model + tokenizer
-model.save_pretrained(output_dir)
-tokenizer.save_pretrained(output_dir)

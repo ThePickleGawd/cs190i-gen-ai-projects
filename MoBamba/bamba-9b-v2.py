@@ -1,20 +1,44 @@
-from unsloth import FastLanguageModel
-from transformers import AutoTokenizer, BitsAndBytesConfig
+from transformers import AutoModelForCausalLM, AutoTokenizer, PreTrainedTokenizer, PreTrainedModel
+from datasets import load_dataset
+from trl import SFTConfig, SFTTrainer, DataCollatorForCompletionOnlyLM
+import math
 
-bnb_config = BitsAndBytesConfig(load_in_4bit=True)
-model, tokenizer = FastLanguageModel.from_pretrained(
-    model_name = "ibm-ai-platform/Bamba-9B-v2",
-    max_seq_length = 24,
-    load_in_4bit = True,
-    max_lora_rank=16,
-    gpu_memory_utilization=0.1
+# Load dataset (just has 'text' field)
+dataset = load_dataset("JunhaoYu/processed_rap_lyrics", split="train")
+
+# Load model and tokenizer
+model_path = "ibm-ai-platform/Bamba-9B-v2"
+model = AutoModelForCausalLM.from_pretrained(model_path)
+tokenizer = AutoTokenizer.from_pretrained(model_path)
+
+# Add PAD token if missing
+if tokenizer.pad_token is None:
+    tokenizer.add_special_tokens({"pad_token": "<PAD>"})
+    model.resize_token_embeddings(len(tokenizer))
+
+# Formatting: treat each rap lyric as a single text sample
+def formatting_prompts_func(example):
+    return [text for text in example["text"]]
+
+# No need for a response template in rap generation
+collator = DataCollatorForCompletionOnlyLM("", tokenizer=tokenizer)
+
+# Training configuration
+train_args = SFTConfig(
+    per_device_train_batch_size=2,
+    output_dir="outputs/rap-bamba-9B",
+    gradient_checkpointing=True,
+    num_train_epochs=3,
 )
 
-message = ["Mamba is a snake with following properties  "]
-inputs = tokenizer(message, return_tensors='pt', return_token_type_ids=False)
-inputs = {k: v.to(model.device) for k, v in inputs.items()}
+# Trainer setup
+trainer = SFTTrainer(
+    model=model,
+    train_dataset=dataset,
+    args=train_args,
+    formatting_func=formatting_prompts_func,
+    data_collator=collator,
+)
 
-outputs = model.generate(**inputs, max_new_tokens=64)
-# outputs = model._old_generate(**inputs, max_new_tokens=64)
-
-print(tokenizer.batch_decode(outputs, skip_special_tokens=True)[0])
+# Train the model
+trainer.train()

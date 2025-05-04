@@ -8,7 +8,7 @@ import math
 dataset = load_dataset("JunhaoYu/processed_rap_lyrics", split="train")
 
 # Load model and tokenizer
-model_path = "ibm-ai-platform/Bamba-9B-v2"
+model_path = "ibm-ai-platform/Bamba-9B-v2" # Or ibm-ai-platform/Bamba-9B-fp8
 model = AutoModelForCausalLM.from_pretrained(model_path)
 tokenizer = AutoTokenizer.from_pretrained(model_path)
 

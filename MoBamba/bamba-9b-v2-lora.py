@@ -1,6 +1,7 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer, PreTrainedTokenizer, PreTrainedModel
 from datasets import load_dataset
 from trl import SFTConfig, SFTTrainer, DataCollatorForCompletionOnlyLM
+from peft import LoraConfig
 import math
 
 # Load dataset (just has 'text' field)
@@ -26,19 +27,27 @@ collator = DataCollatorForCompletionOnlyLM("", tokenizer=tokenizer)
 # Training configuration
 train_args = SFTConfig(
     per_device_train_batch_size=2,
-    output_dir="outputs/mo-bamba-9B-full",
+    output_dir="outputs/mo-bamba-9B-lora",
     gradient_checkpointing=True,
     num_train_epochs=3,
 )
 
-# Trainer setup
+# add peft config
+peft_config = LoraConfig(
+    r=16,
+    lora_alpha=32,
+    lora_dropout=0.05,
+    bias="none",
+    task_type="CAUSAL_LM",
+)
+
 trainer = SFTTrainer(
-    model=model,
+    model,
     train_dataset=dataset,
     args=train_args,
+    peft_config=peft_config,
     formatting_func=formatting_prompts_func,
     data_collator=collator,
 )
 
-# Train the model
 trainer.train()

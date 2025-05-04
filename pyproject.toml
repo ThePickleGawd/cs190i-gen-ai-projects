@@ -27,3 +27,4 @@ dependencies = [
 [tool.uv.sources]
 causal-conv1d = { path = "MoBamba/third-party/causal-conv1d" }
 mamba-ssm = { path = "MoBamba/third-party/mamba" }
+flash-attention = { path = "MoBamba/third-party/flash-attention" }

@@ -3,6 +3,7 @@
 ## Llama 3.1
 
 ### Llama-3.2-3B-bnb-4bit
+
 ```
 [Verse 1]
 So I don't really trust ya, can't take a chance
@@ -12,12 +13,6 @@ And I don't really wanna get involved in a love for more
 The way that you're lookin' and you're feelin'
 And it's nothin' to me, oh, nothin' to me
 ```
-
-### Llama-3.2-1B-bnb-4bit
-```
-
-```
-
 
 # Bad Results
 

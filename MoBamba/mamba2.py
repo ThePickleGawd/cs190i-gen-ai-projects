@@ -8,7 +8,7 @@ import json
 dataset = load_dataset("JunhaoYu/processed_rap_lyrics", split="train")
 
 # === Load model and tokenizer ===
-model_path = "AntonV/mamba2-1.3b-hf"
+model_path = "AntonV/mamba2-2.7b-hf"
 model = AutoModelForCausalLM.from_pretrained(model_path)
 tokenizer = AutoTokenizer.from_pretrained(model_path)
 

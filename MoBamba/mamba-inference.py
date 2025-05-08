@@ -5,7 +5,7 @@ from datetime import datetime
 import os
 
 # === Config ===
-base_model_path = "AntonV/mamba2-1.3b-hf"
+base_model_path = "AntonV/mamba2-2.7b-hf"
 lora_adapter_path = "outputs/mamba-rap-lora/checkpoint-1089"  # or latest checkpoint
 prompt = "[Verse 1]\n"
 

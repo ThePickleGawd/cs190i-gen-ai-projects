@@ -2,6 +2,10 @@
 
 Projects for UCSB CS 190I Spring '25
 
+Read the papers:
+- [YoMAMBA - Mamba-based YOLOv1](https://github.com/ThePickleGawd/cs190i-gen-ai-projects/blob/main/papers/YoMamba.pdf)
+- [Mo Bamba - Mamba-based Rap LLM](https://github.com/ThePickleGawd/cs190i-gen-ai-projects/blob/main/papers/MoBamba.pdf)
+
 ## 1. YoMAMBA
 
 A Mamba-based YOLOv1 architecture. We compare performance with ResNet backbone.
